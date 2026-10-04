@@ -5,6 +5,7 @@ import { initCommand } from "./commands/init";
 import { nativeCommand } from "./commands/native";
 import { overlayCommand } from "./commands/overlay";
 import { replayCommand } from "./commands/replay";
+import { replayExportCommand } from "./commands/replay-export";
 import { testCommand } from "./commands/test";
 
 type Flags = Record<string, string | boolean>;
@@ -72,7 +73,15 @@ async function main(argv: string[]): Promise<void> {
       });
       return;
     case "replay":
-      await replayCommand(rest.find((arg) => !arg.startsWith("--")));
+      if (rest[0] === "export") {
+        await replayExportCommand(
+          rest.slice(1).find((arg) => !arg.startsWith("--")),
+          flags.format,
+          flags.output,
+        );
+      } else {
+        await replayCommand(rest.find((arg) => !arg.startsWith("--")));
+      }
       return;
     case "adapters":
       await doctorCommand();
@@ -169,6 +178,7 @@ Usage:
   opencontroller test --profile xbox --adapter dry-run
   opencontroller overlay --profile xbox --port 4317
   opencontroller replay ./replays/session/events.jsonl
+  opencontroller replay export ./replays/session/events.jsonl --format csv --output replay.csv
   opencontroller bridge --id player-1
   opencontroller native doctor --backend current
   opencontroller native setup --backend current
