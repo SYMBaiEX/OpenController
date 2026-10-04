@@ -1,25 +1,15 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { type Browser, chromium, type Page } from "playwright";
+import {
+  type LocalPolicyRunMetadata,
+  localPolicyRunMetadata,
+  managementForRunnerSummary,
+  parseHeadlessArgs,
+  type RunnerOptions,
+} from "./headless-options";
 
 type PlayerId = "player-1" | "player-2";
-
-type RunnerOptions = {
-  durationMs: number;
-  matches: number;
-  matchGapMs: number;
-  minDecisions: number;
-  minDecisionsPerPlayer: number;
-  minRounds: number;
-  minTotalDamage: number;
-  pollMs: number;
-  startupTimeoutMs: number;
-  port: number;
-  url?: string;
-  output?: string;
-  headed: boolean;
-  verbose: boolean;
-};
 
 type ArenaSnapshot = {
   mode?: string;
@@ -85,6 +75,7 @@ type SeriesSummary = {
   matchDurationMs: number;
   pollMs: number;
   startedServer: boolean;
+  localPolicy: LocalPolicyRunMetadata;
   totalDurationMs: number;
   aggregate: {
     roundsCompleted: number;
@@ -100,7 +91,7 @@ type SeriesSummary = {
   management?: Record<string, unknown>;
 };
 
-const options = parseArgs(Bun.argv.slice(2));
+const options = parseHeadlessArgs(Bun.argv.slice(2));
 const baseUrl = options.url ?? `http://127.0.0.1:${options.port}`;
 let serverProcess: Bun.Subprocess | undefined;
 let browser: Browser | undefined;
@@ -172,13 +163,15 @@ async function runSeries(
       `${baseUrl}/telemetry`,
     );
     const finalArena = stoppedTelemetry.arena ?? match.finalArena;
+    const management = managementForRunnerSummary(
+      stoppedTelemetry.management,
+      options,
+    );
     matches.push({
       ...match,
       damage: damageFromArena(finalArena),
       ...(finalArena ? { finalArena } : {}),
-      ...(stoppedTelemetry.management
-        ? { management: stoppedTelemetry.management }
-        : {}),
+      ...(management ? { management } : {}),
     });
 
     if (index + 1 < options.matches && options.matchGapMs > 0) {
@@ -189,18 +182,20 @@ async function runSeries(
   const aggregate = aggregateMatches(matches);
   const quality = evaluateQuality(aggregate, options);
   const latest = matches.at(-1);
+  const management = latest?.management;
   return {
     baseUrl,
     matchCount: options.matches,
     matchDurationMs: options.durationMs,
     pollMs: options.pollMs,
     startedServer: !options.url,
+    localPolicy: localPolicyRunMetadata(options),
     totalDurationMs: Date.now() - startedAt,
     aggregate,
     quality,
     matches,
     ...(latest?.finalArena ? { finalArena: latest.finalArena } : {}),
-    ...(latest?.management ? { management: latest.management } : {}),
+    ...(management ? { management } : {}),
   };
 }
 
@@ -237,6 +232,7 @@ async function runMatch(
     (event) =>
       typeof event.timestamp === "number" && event.timestamp >= startedAt,
   );
+  const management = managementForRunnerSummary(latest.management, options);
 
   return {
     matchIndex,
@@ -253,7 +249,7 @@ async function runMatch(
       bySource: countBySource(events),
     },
     ...(latest.arena ? { finalArena: latest.arena } : {}),
-    ...(latest.management ? { management: latest.management } : {}),
+    ...(management ? { management } : {}),
   };
 }
 
@@ -396,6 +392,8 @@ function startServer(options: RunnerOptions): Bun.Subprocess {
       OPENCONTROLLER_AGENT_TICK_MS: String(
         Bun.env.OPENCONTROLLER_AGENT_TICK_MS ?? "16",
       ),
+      OPENCONTROLLER_AGENT_FIGHTER_SEED:
+        options.seed === undefined ? "" : String(options.seed),
     },
   });
   drainStream(proc.stdout, "server", options.verbose);
@@ -518,134 +516,6 @@ function countBySource(
 
 function normalizeWinner(value: unknown): PlayerId | null {
   return value === "player-1" || value === "player-2" ? value : null;
-}
-
-function parseArgs(args: string[]): RunnerOptions {
-  const options: RunnerOptions = {
-    durationMs: 15_000,
-    matches: 1,
-    matchGapMs: 250,
-    minDecisions: 1,
-    minDecisionsPerPlayer: 1,
-    minRounds: 0,
-    minTotalDamage: 0,
-    pollMs: 250,
-    startupTimeoutMs: 6_000,
-    port: 5173,
-    headed: false,
-    verbose: false,
-  };
-
-  for (let index = 0; index < args.length; index += 1) {
-    const arg = args[index];
-    switch (arg) {
-      case "--duration-ms":
-        options.durationMs = readPositiveNumber(args[++index], arg);
-        break;
-      case "--matches":
-        options.matches = readPositiveNumber(args[++index], arg);
-        break;
-      case "--match-gap-ms":
-        options.matchGapMs = readNonNegativeNumber(args[++index], arg);
-        break;
-      case "--min-decisions":
-        options.minDecisions = readNonNegativeNumber(args[++index], arg);
-        break;
-      case "--min-decisions-per-player":
-        options.minDecisionsPerPlayer = readNonNegativeNumber(
-          args[++index],
-          arg,
-        );
-        break;
-      case "--min-rounds":
-        options.minRounds = readNonNegativeNumber(args[++index], arg);
-        break;
-      case "--min-total-damage":
-        options.minTotalDamage = readNonNegativeNumber(args[++index], arg);
-        break;
-      case "--poll-ms":
-        options.pollMs = readPositiveNumber(args[++index], arg);
-        break;
-      case "--startup-timeout-ms":
-        options.startupTimeoutMs = readPositiveNumber(args[++index], arg);
-        break;
-      case "--port":
-        options.port = readPositiveNumber(args[++index], arg);
-        break;
-      case "--url":
-        options.url = readRequiredValue(args[++index], arg);
-        break;
-      case "--output":
-        options.output = readRequiredValue(args[++index], arg);
-        break;
-      case "--headed":
-        options.headed = true;
-        break;
-      case "--verbose":
-        options.verbose = true;
-        break;
-      case "--help":
-        printHelp();
-        process.exit(0);
-        break;
-      default:
-        throw new Error(`Unknown option: ${arg}`);
-    }
-  }
-
-  return options;
-}
-
-function readPositiveNumber(value: string | undefined, option: string): number {
-  const parsed = Number(readRequiredValue(value, option));
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    throw new Error(`${option} must be a positive number`);
-  }
-  return Math.round(parsed);
-}
-
-function readNonNegativeNumber(
-  value: string | undefined,
-  option: string,
-): number {
-  const parsed = Number(readRequiredValue(value, option));
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    throw new Error(`${option} must be zero or a positive number`);
-  }
-  return Math.round(parsed);
-}
-
-function readRequiredValue(value: string | undefined, option: string): string {
-  if (!value || value.startsWith("--")) {
-    throw new Error(`${option} requires a value`);
-  }
-  return value;
-}
-
-function printHelp(): void {
-  console.log(`OpenController Agent Fighter Headless Runner
-
-Usage:
-  bun --cwd examples/agent-fighter headless [options]
-
-Options:
-  --duration-ms <ms>          Match runtime before summarizing (default: 15000)
-  --matches <count>           Number of matches in the series (default: 1)
-  --match-gap-ms <ms>         Delay between matches (default: 250)
-  --min-decisions <count>     Fail if total decisions are below count (default: 1)
-  --min-decisions-per-player <count>
-                              Fail if either player has fewer decisions (default: 1)
-  --min-rounds <count>        Fail if completed rounds are below count (default: 0)
-  --min-total-damage <hp>     Fail if total HP damage is below value (default: 0)
-  --poll-ms <ms>              Telemetry polling interval (default: 250)
-  --startup-timeout-ms <ms>   Time to wait for spawned server (default: 6000)
-  --port <port>               Port for spawned server (default: 5173)
-  --url <url>                 Use an already-running server instead of spawning
-  --output <path>             Write JSON summary to a file
-  --headed                    Show the Chromium window
-  --verbose                   Print server and browser diagnostics
-  --help                      Show this help
-`);
 }
 
 function sleep(ms: number): Promise<void> {

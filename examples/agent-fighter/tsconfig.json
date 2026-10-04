@@ -5,7 +5,12 @@
     "outDir": "dist",
     "composite": true
   },
-  "include": ["server.ts", "headless.ts"],
+  "include": [
+    "server.ts",
+    "headless.ts",
+    "headless-options.ts",
+    "local-policy.ts"
+  ],
   "references": [
     {
       "path": "../../packages/core"
