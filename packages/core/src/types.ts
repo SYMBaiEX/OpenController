@@ -424,6 +424,11 @@ export type ReplayEvent =
       controllerId: string;
       error: string;
       command?: ControllerCommand;
+      errorName?: string;
+      errorStack?: string;
+      errorDetails?: unknown;
+      intent?: string;
+      source?: string;
     }
   | {
       type: "annotation";

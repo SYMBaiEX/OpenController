@@ -34,6 +34,24 @@ make common review tasks easier:
 - `feedback.jsonl`: host rumble/light output events plus `stateAfter`
 - `errors.jsonl`: command processing errors
 
+Error events keep the existing `error` message and optional `command` fields.
+They also include available `intent` and `source` values from the failed
+command's `CommandContext`. For native JavaScript `Error` values, replay adds
+`errorName` and `errorStack` when those properties are available. For other
+thrown values, `error` contains a safe string rendering and `errorDetails`
+contains a JSON-safe representation; circular references, unreadable values,
+and excessive nesting are marked instead of preventing the event from being
+written. These details may contain sensitive data if an adapter includes it in
+an error message or custom property. Stack traces may expose local paths and
+runtime details. Review error content before sharing a replay.
+
+Older error events with only `error` and `command` remain valid. Replay export
+preserves the original event fields, including the optional diagnostic fields.
+Replay records failures that reach OpenController's command
+boundary; it does not capture game observations or exceptions from external
+games and servers that never reach the adapter. Replay does not retry failed
+commands.
+
 Inspect a replay:
 
 ```bash
