@@ -1,6 +1,6 @@
 # OpenController AI and Gaming Opportunity Goal
 
-**Status:** Cycle 1 is merged to `main` as PRs #1–#4. Cycle 2 issues [#8](https://github.com/SYMBaiEX/OpenController/issues/8) and [#9](https://github.com/SYMBaiEX/OpenController/issues/9) were implemented and merged in [PR #12](https://github.com/SYMBaiEX/OpenController/pull/12) (`067fc591fe34e7d09cfdfedcf8db48fcd6a7c0d1`) and [PR #13](https://github.com/SYMBaiEX/OpenController/pull/13) (`5f7e6fc7054654f220a6cb45a4c438ae0d9e4ae7`); [#10](https://github.com/SYMBaiEX/OpenController/issues/10) remains deferred. Cycle 3 selected [#14](https://github.com/SYMBaiEX/OpenController/issues/14), which is implemented in [PR #19](https://github.com/SYMBaiEX/OpenController/pull/19) (`f2baa6b297f05c20b065baab196cce8d6a725bdc`); [#15](https://github.com/SYMBaiEX/OpenController/issues/15) remains deferred. Cycle 4 research gate [#23](https://github.com/SYMBaiEX/OpenController/issues/23) tracks candidates [#20](https://github.com/SYMBaiEX/OpenController/issues/20)–[#22](https://github.com/SYMBaiEX/OpenController/issues/22). Metric baselines remain unselected pending deterministic-scenario evidence, and Reddit/accessibility source gaps remain open.
+**Status:** Cycle 1 is merged to `main` as PRs #1–#4. Cycle 2 issues [#8](https://github.com/SYMBaiEX/OpenController/issues/8) and [#9](https://github.com/SYMBaiEX/OpenController/issues/9) merged in [PR #12](https://github.com/SYMBaiEX/OpenController/pull/12) (`067fc591fe34e7d09cfdfedcf8db48fcd6a7c0d1`) and [PR #13](https://github.com/SYMBaiEX/OpenController/pull/13) (`5f7e6fc7054654f220a6cb45a4c438ae0d9e4ae7`); [#10](https://github.com/SYMBaiEX/OpenController/issues/10) remains deferred. Cycle 3 issue [#14](https://github.com/SYMBaiEX/OpenController/issues/14) merged in [PR #19](https://github.com/SYMBaiEX/OpenController/pull/19) (`f2baa6b297f05c20b065baab196cce8d6a725bdc`); [#15](https://github.com/SYMBaiEX/OpenController/issues/15) remains deferred. Cycle 4 selected issue [#22](https://github.com/SYMBaiEX/OpenController/issues/22) merged in [PR #25](https://github.com/SYMBaiEX/OpenController/pull/25) at `8eb744cf3167dee9838160ab7364ca6c3bc66e5f`; its roadmap closeout is in progress under gate [#23](https://github.com/SYMBaiEX/OpenController/issues/23). Cycle 5 gate [#29](https://github.com/SYMBaiEX/OpenController/issues/29) is blocked by #23 and tracks candidates [#26](https://github.com/SYMBaiEX/OpenController/issues/26)–[#28](https://github.com/SYMBaiEX/OpenController/issues/28). Whole-match regression baselines remain deferred until a stable scenario is demonstrated; Reddit and accessibility source gaps remain open.
 
 ## Product goal
 
@@ -156,26 +156,28 @@ Windows VHF driver installation/signing and macOS DriverKit activation are
 still not probed by the current native doctor, so their readiness remains
 `unknown` when those checks cannot be verified.
 
-## Work DAG
+## Current work DAG
 
 ```mermaid
 flowchart TD
-  A[Targeted public source sweep with coverage notes] --> C[Rank opportunities and finalize acceptance]
-  B[Repository roadmap and architecture audit] --> C
-  C --> D[Slice B: replay export]
-  C --> E[Slice C: native readiness diagnostics]
-  C --> F[Defer slice A until deterministic measurable runs exist]
-  F --> G[Future: stabilize scenario and telemetry outcomes]
-  D --> H[Per-slice review and focused checks]
-  E --> H
-  H --> I[Integrated independent review and release checks]
-  I --> J[Prepare stacked PRs]
+  A[Cycle 4 issue #22 implementation] --> B[PR #25 review and checks]
+  B --> C[PR #25 merged to main]
+  C --> D[Cycle 4 roadmap closeout PR]
+  D --> E[Close Cycle 4 gate #23]
+  E --> F[Unblock Cycle 5 research gate #29]
+  F --> G[Refresh sources and audit current main]
+  G --> H[Rank Cycle 5 candidates #26-#28]
+  H --> I[Select one bounded issue or record no-build]
+  I --> J[Stacked implementation PRs, review, checks, and merge]
+  J --> K[Update roadmap and open Cycle 6 gate]
+  K --> L[Close Cycle 5 gate #29]
 ```
 
-The targeted source-sweep node is complete for the sources listed above; Reddit
-and accessibility-focused community evidence remain explicit gaps. Replay
-export and native readiness are merged. Baseline capture remains a future node
-because unstable metrics would create false confidence.
+The DAG repeats research, repository audit, bounded selection, implementation,
+independent review, required checks, merge, and opening the next research gate.
+Earlier cycle DAGs below record historical decisions. Coverage gaps and
+whole-match nondeterminism remain explicit; seeded local decisions do not prove
+stable match outcomes.
 
 ## Branch and PR dependency order
 
@@ -275,15 +277,19 @@ An independent review caught the fixed-directory replay append issue and the mis
 
 Integrated validation on `main` after the merge passed: Biome checked 144 files; TypeScript project build passed; 162 tests passed with 0 failures and 1,170 assertions; all 9 Turbo build targets succeeded; audit found no vulnerabilities in 90 packages; package packing passed for all 7 publishable packages; `check:dry-run-examples` passed; and `git diff --check` passed. Issue #15 remains deferred.
 
-### Cycle 4 research gate and candidate backlog
+### Cycle 4 closeout and Cycle 5 research gate
 
-The next research goal is [issue #23](https://github.com/SYMBaiEX/OpenController/issues/23), in milestone 3. It is currently blocked by Cycle 3 gate #16; closing #16 after this roadmap closeout will unblock Cycle 4. Candidate issues [#20](https://github.com/SYMBaiEX/OpenController/issues/20) (native-test failure cleanup), [#21](https://github.com/SYMBaiEX/OpenController/issues/21) (tested versus unverified host/game compatibility), and [#22](https://github.com/SYMBaiEX/OpenController/issues/22) (seeded Agent Fighter local-policy evaluation) wait on the Cycle 4 research gate. None is selected for implementation.
+Cycle 4 research gate [#23](https://github.com/SYMBaiEX/OpenController/issues/23) selected [#22 — seed Agent Fighter local decisions](https://github.com/SYMBaiEX/OpenController/issues/22). The issue's code audit found unseeded `Math.random()` branches in the local policy and no runner seed input or output metadata. Adjacent game-agent benchmark requests motivated investigation but do not establish OpenController user prevalence. Candidates [#20](https://github.com/SYMBaiEX/OpenController/issues/20) (native-test failure cleanup) and [#21](https://github.com/SYMBaiEX/OpenController/issues/21) (host/game compatibility evidence) remain deferred; #10 and #15 also remain deferred.
 
-The initial ranking favors #22 because it has a direct repository gap and aligns with repeatable agent-evaluation workflows, but browser/game timing may prevent stable outcomes. #20 has a bounded first-party failure-path question. #21 may help users distinguish SDK protocol checks from host/game validation, but must not duplicate existing profile conformance or native doctor/test coverage. The gate may reorder or reject all candidates after auditing current code. #10 and #15 remain deferred.
+Implementation PR [#25](https://github.com/SYMBaiEX/OpenController/pull/25) merged to `main` at `8eb744cf3167dee9838160ab7364ca6c3bc66e5f`; GitHub closed issue #22. The server now uses per-player `mulberry32-v1` streams only for randomized local-policy choices, and the headless runner accepts `--seed <uint32>` for a server it starts. Telemetry and JSON summaries report the seed and scope when controlled by the runner; external-server runs do not claim an unknown seed. The change makes identical local decisions repeat for the same seed and observation sequence; it does not make browser-driven full matches deterministic and excludes provider responses.
 
-The 2026-10-04 source refresh reviewed targeted reports from GitHub, Steam for Linux, OpenAI Developer Community, Hacker News, and adjacent game-agent projects. It found individual reports about cross-layer controller mapping, host/game forwarding, deterministic game-agent traces, and benchmark seed corpora. These are evidence seeds, not prevalence estimates. Reddit returned HTTP 403; Steam Community search returned no verifiable dated result. Full source notes, ranking limits, and acceptance criteria are recorded in issue #23 and candidate issues #20–#22.
+PR #25 passed CI and independent review. `bun run release:check` passed: 166 tests, zero failures, typecheck, all 9 build tasks, audit with no vulnerabilities, and package checks. A seeded headless smoke run with seed 42 reported matching server and summary metadata and 16 local decisions. The Playwright CDN returned HTTP 403, so the smoke used the existing system Chromium. These checks validate SDK-controlled policy behavior and packaging, not external game, host, or hardware behavior.
 
-**GitHub Projects tracking:** a Project V2 could not be created because the connected GitHub integration returned `Resource not accessible by integration` for `createProjectV2`. Until the integration has Projects write access, track work in milestone 3 and the native blocked-by DAG; no GitHub Project has been created.
+Cycle 4 closes only after this roadmap update merges and gate #23 is closed. Candidate backlog for Cycle 5 is tracked in milestone 4: [#26 — user-run browser hardware routing check](https://github.com/SYMBaiEX/OpenController/issues/26), [#27 — multi-controller slot ownership and recovery](https://github.com/SYMBaiEX/OpenController/issues/27), and [#28 — input latency at explicit SDK boundaries](https://github.com/SYMBaiEX/OpenController/issues/28). The dated sources are adjacent single-project reports: [Tanks #616](https://github.com/AustinOrphan/tanks/issues/616) (2026-09-08), [Selkies #431](https://github.com/selkies-project/selkies/issues/431) (2026-09-29), [PortareOS #436](https://github.com/portare-ch/portareos/issues/436) (2026-09-29), [DuelBox-Web #133](https://github.com/swiftSaneGames/DuelBox-Web/issues/133) (2026-08-19), and the [Chrome Gamepad event-driven proposal #1313](https://github.com/GoogleChrome/modern-web-guidance-src/issues/1313) (2026-08-14). They seed investigation and do not indicate prevalence or OpenController defects. The new research gate must refresh broader communities, verify current repository fit, and rank or reject these candidates.
+
+Cycle 5 research gate [#29](https://github.com/SYMBaiEX/OpenController/issues/29) is blocked by #23. Once unblocked, it will re-rank #26–#28 against refreshed evidence and current `main`, select one bounded slice or a no-build decision, then require independent implementation review, checks, merge, roadmap update, and a Cycle 6 gate before closing.
+
+**GitHub Projects tracking:** project creation was retried during this cycle and GitHub again returned `Resource not accessible by integration` for `createProjectV2`. No Project V2 exists. Milestones and the native issue dependency graph are the current tracker until the connected GitHub integration has Projects write permission.
 
 ## Branch and swarm operating rules
 
