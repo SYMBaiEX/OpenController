@@ -11,7 +11,7 @@ This matrix describes fields emitted by OpenController's core encoders. It recor
 | Switch | B / A / Y / X | L / R | ZL / ZR | MINUS, PLUS, HOME, CAPTURE, LS, RS; motion |
 | Generic HID | BUTTON_0 / BUTTON_1 / BUTTON_2 / BUTTON_3; aliases A/B/X/Y | BUTTON_4 / BUTTON_5 | BUTTON_6 / BUTTON_7 | BUTTON_8, BUTTON_9, BUTTON_10, BUTTON_11; four D-pad directions |
 
-All four profiles support four D-pad directions and left/right sticks. The generic HID profile is OpenController's logical generic layout; it does not infer a physical controller's vendor-specific button assignment.
+All four profiles support four D-pad directions and left/right sticks. The generic HID profile is OpenController's logical generic layout; it does not infer a physical controller's vendor-specific button assignment. It defines no HOME or CAPTURE buttons: BUTTON_10 and BUTTON_11 are left and right stick clicks. The generic HID report can still encode HOME/CAPTURE bits for profiles that map those controls, such as Xbox GUIDE or Switch HOME/CAPTURE.
 
 ## Output format coverage
 

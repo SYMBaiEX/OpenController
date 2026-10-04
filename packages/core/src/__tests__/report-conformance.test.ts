@@ -188,12 +188,76 @@ describe("profile to report conformance", () => {
     }
   });
 
+  test("profile system controls map only to report formats that carry them", async () => {
+    const controls = [
+      { profile: "xbox", button: "GUIDE", hidBit: 0x0400, xinputBit: 0 },
+      { profile: "playstation", button: "PS", hidBit: 0x0400, xinputBit: 0 },
+      { profile: "switch", button: "HOME", hidBit: 0x0400, xinputBit: 0 },
+      { profile: "switch", button: "CAPTURE", hidBit: 0x0800, xinputBit: 0 },
+      {
+        profile: "generic-hid",
+        button: "BUTTON_10",
+        hidBit: xInputButtonBits.LS,
+        xinputBit: xInputButtonBits.LS,
+      },
+      {
+        profile: "generic-hid",
+        button: "BUTTON_11",
+        hidBit: xInputButtonBits.RS,
+        xinputBit: xInputButtonBits.RS,
+      },
+    ] as const;
+    for (const { profile, button, hidBit, xinputBit } of controls) {
+      const controller = await createController({
+        profile,
+        adapter: "dry-run",
+        replay: false,
+        safety: {
+          allowSystemButtons: true,
+          allowGuideButton: true,
+          disabledButtons: [],
+        },
+      });
+      await controller.setState({ buttons: { [button]: true } });
+      const state = controller.getState();
+      expect(
+        decodeHidGamepadReport(encodeHidGamepadReport(state)).buttons,
+      ).toBe(hidBit);
+      expect(decodeXInputReport(encodeXInputReport(state)).buttons).toBe(
+        xinputBit,
+      );
+      await controller.disconnect();
+    }
+
+    const generic = await createController({
+      profile: "generic-hid",
+      adapter: "dry-run",
+      replay: false,
+      safety: {
+        allowSystemButtons: true,
+        allowGuideButton: true,
+        disabledButtons: [],
+      },
+    });
+    await expect(
+      generic.setState({ buttons: { HOME: true } }),
+    ).rejects.toThrow();
+    await expect(
+      generic.setState({ buttons: { CAPTURE: true } }),
+    ).rejects.toThrow();
+    await generic.disconnect();
+  });
+
   test("PlayStation profile controls retain aliases and profile-only fields in extended HID", async () => {
     const controller = await createController({
       profile: "playstation",
       adapter: "dry-run",
       replay: false,
-      safety: { allowSystemButtons: true },
+      safety: {
+        allowSystemButtons: true,
+        allowGuideButton: true,
+        disabledButtons: [],
+      },
     });
     await controller.setState({
       buttons: {
@@ -211,7 +275,10 @@ describe("profile to report conformance", () => {
       sticks: { LEFT: { x: 0.125, y: -0.25 }, RIGHT: { x: -0.5, y: 0.75 } },
       touchpad: {
         pressed: true,
-        contacts: [{ id: 9, x: 0.25, y: 0.75, pressure: 0.5 }],
+        contacts: [
+          { id: 9, x: 0.25, y: 0.75, pressure: 0.5 },
+          { id: 10, x: 0.875, y: 0.125, pressure: 0.25 },
+        ],
       },
       motion: {
         acceleration: { x: 0.125, y: -0.25, z: 0.5 },
@@ -248,6 +315,13 @@ describe("profile to report conformance", () => {
       x: 16384,
       y: 49151,
       pressure: 128,
+    });
+    expect(report.touchpadContacts[1]).toEqual({
+      id: 10,
+      active: true,
+      x: 57343,
+      y: 8192,
+      pressure: 64,
     });
     expect([
       report.accelerationX,
