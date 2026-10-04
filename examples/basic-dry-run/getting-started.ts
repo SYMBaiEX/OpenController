@@ -1,8 +1,9 @@
+import { randomUUID } from "node:crypto";
 import type { ControllerState } from "@opencontroller/core";
 import { createController } from "@opencontroller/core";
 
 export async function runGettingStartedDryRun(
-  replayDir = "replays/getting-started-dry-run",
+  replayDir = `replays/getting-started-dry-run-${randomUUID()}`,
 ): Promise<ControllerState> {
   const controller = await createController({
     profile: "xbox",

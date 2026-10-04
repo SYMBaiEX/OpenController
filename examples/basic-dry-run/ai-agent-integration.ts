@@ -1,8 +1,9 @@
+import { randomUUID } from "node:crypto";
 import type { ControllerState } from "@opencontroller/core";
 import { createActionMap, createController } from "@opencontroller/core";
 
 export async function runAgentActionMapExample(
-  replayDir = "replays/ai-agent-action-map",
+  replayDir = `replays/ai-agent-action-map-${randomUUID()}`,
 ): Promise<{ heldState: ControllerState; releasedState: ControllerState }> {
   const controller = await createController({
     profile: "xbox",

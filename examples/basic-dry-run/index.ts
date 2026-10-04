@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   createActionMap,
   createController,
@@ -5,7 +6,7 @@ import {
 } from "@opencontroller/core";
 
 export async function runBasicDryRunExample(
-  replayDir = "replays/basic-dry-run-example",
+  replayDir = `replays/basic-dry-run-example-${randomUUID()}`,
 ) {
   const controller = await createController({
     profile: "xbox",
