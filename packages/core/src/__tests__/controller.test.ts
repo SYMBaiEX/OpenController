@@ -2470,6 +2470,31 @@ describe("controller runtime", () => {
 
     await hub.disconnectAll();
   });
+
+  test("rejects duplicate logical hub IDs and allows reuse after disconnectAll", async () => {
+    const hub = await createControllerHub();
+    const options = {
+      id: "caller-owned-player",
+      profile: "xbox" as const,
+      adapter: "dry-run" as const,
+      replay: false,
+    };
+    const first = await hub.add(options);
+
+    await expect(hub.add(options)).rejects.toThrow(
+      "Controller caller-owned-player already exists",
+    );
+    expect(hub.get(options.id)).toBe(first);
+
+    await hub.disconnectAll();
+    expect(hub.has(options.id)).toBe(false);
+
+    const reused = await hub.add(options);
+    expect(hub.get(options.id)).toBe(reused);
+    expect(reused).not.toBe(first);
+
+    await hub.disconnectAll();
+  });
 });
 
 async function waitFor(predicate: () => boolean): Promise<void> {
