@@ -75,7 +75,7 @@ export class ControllerRuntime {
       try {
         await this.processCommand(command, context);
       } catch (error) {
-        await this.replay?.error(error, command);
+        await this.replay?.error(error, command, context);
         if (this.safety.getConfig().neutralOnError) {
           await this.forceNeutral();
         }

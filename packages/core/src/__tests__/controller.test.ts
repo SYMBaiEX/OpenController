@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { exportReplay } from "../../../../packages/cli/src/commands/replay-export";
 import {
   type ControllerFeedbackEvent,
   createActionMap,
@@ -2200,6 +2201,82 @@ describe("controller runtime", () => {
     const events = await readFile(join(dir, "events.jsonl"), "utf8");
     expect(events).toContain('"type":"command"');
     expect(events).toContain('"button":"CROSS"');
+  });
+
+  test("records command context and diagnostic details in replay errors", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "opencontroller-error-replay-"));
+    cleanupDirs.push(dir);
+    const adapter = new DryRunAdapter();
+    adapter.send = async () => {
+      throw new TypeError("adapter send failed");
+    };
+    const controller = await createController({
+      profile: "playstation",
+      adapter,
+      replay: { dir },
+    });
+
+    await expect(
+      controller.press("X", {
+        context: { intent: "confirm selection", source: "agent" },
+      }),
+    ).rejects.toThrow("adapter send failed");
+
+    const [event] = (await readFile(join(dir, "errors.jsonl"), "utf8"))
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line));
+    expect(event).toMatchObject({
+      type: "error",
+      error: "adapter send failed",
+      errorName: "TypeError",
+      intent: "confirm selection",
+      source: "agent",
+      command: { type: "press", button: "X" },
+    });
+    expect(event.errorStack).toContain("TypeError: adapter send failed");
+  });
+
+  test("serializes legacy and non-Error replay failures safely", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "opencontroller-error-replay-"));
+    cleanupDirs.push(dir);
+    const adapter = new DryRunAdapter();
+    const failure: Record<string, unknown> = { code: 17n };
+    failure.self = failure;
+    adapter.send = async () => {
+      throw failure;
+    };
+    const controller = await createController({
+      profile: "playstation",
+      adapter,
+      replay: { dir },
+    });
+    await expect(controller.press("X")).rejects.toBe(failure);
+
+    const [event] = (await readFile(join(dir, "errors.jsonl"), "utf8"))
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line));
+    expect(event).toMatchObject({
+      type: "error",
+      error: "[object Object]",
+      errorDetails: { code: "17n", self: "[circular]" },
+    });
+    const legacyFixture = JSON.parse(
+      '{"type":"error","timestamp":1,"controllerId":"old","error":"legacy failure","command":{"type":"press","button":"CROSS"}}',
+    );
+    expect(legacyFixture).toMatchObject({
+      type: "error",
+      error: "legacy failure",
+      command: { type: "press", button: "CROSS" },
+    });
+    const legacyLog = join(dir, "legacy-events.jsonl");
+    const exportedLog = join(dir, "legacy-events.json");
+    await writeFile(legacyLog, `${JSON.stringify(legacyFixture)}\n`);
+    await exportReplay(legacyLog, { format: "json", output: exportedLog });
+    expect(JSON.parse(await readFile(exportedLog, "utf8"))).toEqual([
+      legacyFixture,
+    ]);
   });
 
   test("tracks and replays host feedback output state once per event", async () => {

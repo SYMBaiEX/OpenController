@@ -87,13 +87,30 @@ export class ReplayLogger {
     });
   }
 
-  async error(error: unknown, command?: ControllerCommand): Promise<void> {
+  async error(
+    error: unknown,
+    command?: ControllerCommand,
+    context: CommandContext = {},
+  ): Promise<void> {
+    const nativeError = isNativeError(error);
+    const message = nativeError
+      ? safeProperty(error, "message")
+      : safeString(error);
     await this.write({
       type: "error",
       timestamp: Date.now(),
       controllerId: this.controllerId,
-      error: error instanceof Error ? error.message : String(error),
+      error: typeof message === "string" ? message : safeString(message),
       ...(command ? { command } : {}),
+      ...(context.intent === undefined ? {} : { intent: context.intent }),
+      ...(context.source === undefined ? {} : { source: context.source }),
+      ...(nativeError && typeof safeProperty(error, "name") === "string"
+        ? { errorName: safeProperty(error, "name") as string }
+        : {}),
+      ...(nativeError && typeof safeProperty(error, "stack") === "string"
+        ? { errorStack: safeProperty(error, "stack") as string }
+        : {}),
+      ...(!nativeError ? { errorDetails: toJsonSafe(error) } : {}),
     });
   }
 
@@ -143,6 +160,78 @@ export class ReplayLogger {
         `${JSON.stringify(event)}\n`,
       );
     }
+  }
+}
+
+function safeProperty(value: object, key: string): unknown {
+  try {
+    return Reflect.get(value, key);
+  } catch {
+    return undefined;
+  }
+}
+
+function isNativeError(value: unknown): value is Error {
+  try {
+    return value instanceof Error;
+  } catch {
+    return false;
+  }
+}
+
+function safeString(value: unknown): string {
+  try {
+    return String(value);
+  } catch {
+    return "[unprintable error value]";
+  }
+}
+
+function toJsonSafe(
+  value: unknown,
+  seen = new WeakSet<object>(),
+  depth = 0,
+): unknown {
+  if (
+    value === null ||
+    typeof value === "string" ||
+    typeof value === "boolean"
+  ) {
+    return value;
+  }
+  if (typeof value === "number")
+    return Number.isFinite(value) ? value : String(value);
+  if (typeof value === "undefined") return "[undefined]";
+  if (typeof value === "bigint") return `${value}n`;
+  if (typeof value === "symbol" || typeof value === "function")
+    return safeString(value);
+  if (depth >= 8) return "[depth limit]";
+  if (typeof value !== "object") return safeString(value);
+  if (seen.has(value)) return "[circular]";
+  seen.add(value);
+  try {
+    if (Array.isArray(value)) {
+      return Array.from({ length: value.length }, (_, index) => {
+        try {
+          return toJsonSafe(value[index], seen, depth + 1);
+        } catch {
+          return "[unreadable]";
+        }
+      });
+    }
+    const result: Record<string, unknown> = {};
+    for (const key of Object.keys(value)) {
+      try {
+        result[key] = toJsonSafe(Reflect.get(value, key), seen, depth + 1);
+      } catch {
+        result[key] = "[unreadable]";
+      }
+    }
+    return result;
+  } catch {
+    return "[unserializable]";
+  } finally {
+    seen.delete(value);
   }
 }
 
