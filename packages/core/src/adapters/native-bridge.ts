@@ -1,11 +1,11 @@
 import {
   type CreateNativeBridgeStateMessageOptions,
-  type NativeBridgeConnectReportFormat,
-  type NativeBridgeDeviceInfo,
-  type NativeBridgeMessage,
   createNativeBridgeConnectMessage,
   createNativeBridgeDisconnectMessage,
   createNativeBridgeStateMessage,
+  type NativeBridgeConnectReportFormat,
+  type NativeBridgeDeviceInfo,
+  type NativeBridgeMessage,
   serializeNativeBridgeMessage,
 } from "../bridge";
 import type { ControllerState, NormalizedControllerCommand } from "../types";

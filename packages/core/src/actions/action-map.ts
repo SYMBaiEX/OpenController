@@ -1,22 +1,29 @@
 import type { Controller } from "../controller";
 import type { CommandContext, ControllerCommand } from "../types";
 
-export type ActionMapDefinition = Record<string, ControllerCommand[]>;
+export type ActionMapDefinition = Record<string, readonly ControllerCommand[]>;
+export type ActionNames<TDefinition extends ActionMapDefinition> =
+  keyof TDefinition & string;
 
 export type ActionRunOptions = CommandContext & {
   durationMs?: number;
 };
 
-export type ActionMap = {
-  run(actionName: string, options?: ActionRunOptions): Promise<void>;
-  list(): string[];
-  has(actionName: string): boolean;
+export type ActionMap<
+  TDefinition extends ActionMapDefinition = ActionMapDefinition,
+> = {
+  run(
+    actionName: keyof TDefinition & string,
+    options?: ActionRunOptions,
+  ): Promise<void>;
+  list(): Array<ActionNames<TDefinition>>;
+  has(actionName: string): actionName is ActionNames<TDefinition>;
 };
 
-export function createActionMap(
+export function createActionMap<const TDefinition extends ActionMapDefinition>(
   controller: Controller,
-  definition: ActionMapDefinition,
-): ActionMap {
+  definition: TDefinition,
+): ActionMap<TDefinition> {
   return {
     async run(actionName, options = {}) {
       const commands = definition[actionName];
@@ -28,18 +35,18 @@ export function createActionMap(
       const resolved =
         durationMs !== undefined
           ? commands.map((command) => applyDuration(command, durationMs))
-          : commands;
+          : [...commands];
 
       await controller.sequence(resolved, {
         intent: options.intent ?? actionName,
         source: options.source ?? "action-map",
       });
     },
-    list() {
-      return Object.keys(definition);
+    list(): Array<ActionNames<TDefinition>> {
+      return Object.keys(definition) as Array<ActionNames<TDefinition>>;
     },
-    has(actionName) {
-      return Boolean(definition[actionName]);
+    has(actionName): actionName is ActionNames<TDefinition> {
+      return Object.hasOwn(definition, actionName);
     },
   };
 }

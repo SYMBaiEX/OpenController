@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { readFile } from "node:fs/promises";
 import {
-  type NativeProcessBridgeSpawner,
   createController,
+  type NativeProcessBridgeSpawner,
 } from "@opencontroller/core";
 import {
   createLinuxUinputBridgeAdapter,

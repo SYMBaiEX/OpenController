@@ -3,12 +3,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "dist",
-    "composite": true,
-    "baseUrl": "../..",
-    "paths": {
-      "@opencontroller/core": ["packages/core/src/index.ts"],
-      "@opencontroller/core/*": ["packages/core/src/*"]
-    }
+    "composite": true
   },
   "include": ["server.ts", "headless.ts"],
   "references": [

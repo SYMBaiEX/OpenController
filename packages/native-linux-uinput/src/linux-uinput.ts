@@ -6,8 +6,8 @@ import {
   type NativeProcessBridgeAdapterOptions,
 } from "@opencontroller/core";
 import {
-  type LinuxUinputUdevRule,
   createLinuxUinputUdevRules,
+  type LinuxUinputUdevRule,
 } from "./diagnostics";
 
 export const linuxUinputHelperSourcePath = new URL(

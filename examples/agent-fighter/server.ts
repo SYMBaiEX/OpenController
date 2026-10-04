@@ -1,16 +1,15 @@
 import { Database } from "bun:sqlite";
 import { mkdirSync } from "node:fs";
-import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   type Controller,
   type ControllerCommand,
   type ControllerState,
   type ControllerStatePatch,
-  type DpadDirection,
-  type DpadState,
   createControllerHub,
   createInitialControllerState,
+  type DpadDirection,
+  type DpadState,
   dpadButtons,
   resolveProfile,
 } from "@opencontroller/core";
@@ -22,6 +21,21 @@ type SocketData = {
   kind: ClientKind;
   playerId?: PlayerId;
 };
+type AgentFighterRoute =
+  | "/game"
+  | "/controller"
+  | "/controller/:playerId"
+  | "/state"
+  | "/telemetry"
+  | "/management/start"
+  | "/management/stop"
+  | "/management/reset"
+  | "/client.js"
+  | "/controller-panel.js"
+  | "/controllers"
+  | "/management"
+  | "/"
+  | "/index.html";
 type ArenaSnapshot = {
   mode: string;
   timeRemaining: number;
@@ -82,6 +96,21 @@ type ManagementState = {
   openAiDecisionMs: number;
   agentTickMs: number;
   openAiEnabled: boolean;
+};
+type ArenaSnapshotRow = { value: string };
+type RecentAgentEventRow = {
+  id: number;
+  timestamp: number;
+  playerId: PlayerId;
+  source: DecisionSource;
+  model: string;
+  style: string;
+  action: FighterAction;
+  rationale: string;
+  latencyMs: number;
+  responseId: string | null;
+  observationJson: string;
+  controlsJson: string;
 };
 
 const playerIds = ["player-1", "player-2"] as const;
@@ -209,67 +238,86 @@ for (const playerId of playerIds) {
 }
 
 const requestedPort = Number(Bun.env.OPENCONTROLLER_FIGHTER_PORT ?? "5173");
-const server = Bun.serve<SocketData>({
+const server = Bun.serve<SocketData, AgentFighterRoute>({
   port: requestedPort,
   hostname: "127.0.0.1",
-  async fetch(request, serverInstance) {
-    const url = new URL(request.url);
-    if (url.pathname === "/game") {
-      return upgrade(request, serverInstance, { kind: "game" });
-    }
-    if (url.pathname === "/controller") {
-      return upgrade(request, serverInstance, { kind: "controller" });
-    }
-    if (url.pathname.startsWith("/controller/")) {
-      const playerId = url.pathname.split("/").at(-1);
-      if (playerId === "player-1" || playerId === "player-2") {
+  routes: {
+    "/game": {
+      GET: (request, serverInstance) =>
+        upgrade(request, serverInstance, { kind: "game" }),
+    },
+    "/controller": {
+      GET: (request, serverInstance) =>
+        upgrade(request, serverInstance, { kind: "controller" }),
+    },
+    "/controller/:playerId": {
+      GET: (request, serverInstance) => {
+        const { playerId } = request.params;
+        if (playerId !== "player-1" && playerId !== "player-2") {
+          return new Response("Unknown player", { status: 404 });
+        }
         return upgrade(request, serverInstance, {
           kind: "controller",
           playerId,
         });
-      }
-      return new Response("Unknown player", { status: 404 });
-    }
-    if (url.pathname === "/state") {
-      return Response.json(snapshotPayload(), {
-        headers: { "cache-control": "no-store" },
-      });
-    }
-    if (url.pathname === "/telemetry") {
-      return Response.json(telemetryPayload(), {
-        headers: { "cache-control": "no-store" },
-      });
-    }
-    if (url.pathname === "/management/start" && request.method === "POST") {
-      startAgentDecisions("Agents started from controller page.");
-      return Response.json(telemetryPayload(), {
-        headers: { "cache-control": "no-store" },
-      });
-    }
-    if (url.pathname === "/management/stop" && request.method === "POST") {
-      await stopAgentDecisions("Agents stopped from controller page.");
-      return Response.json(telemetryPayload(), {
-        headers: { "cache-control": "no-store" },
-      });
-    }
-    if (url.pathname === "/management/reset" && request.method === "POST") {
-      resetArenaSnapshot();
-      return Response.json(telemetryPayload(), {
-        headers: { "cache-control": "no-store" },
-      });
-    }
-    if (url.pathname === "/client.js") {
-      return serveFile("client.js", "text/javascript; charset=utf-8");
-    }
-    if (url.pathname === "/controller-panel.js") {
-      return serveFile("controller-panel.js", "text/javascript; charset=utf-8");
-    }
-    if (url.pathname === "/controllers" || url.pathname === "/management") {
-      return serveFile("controllers.html", "text/html; charset=utf-8");
-    }
-    if (url.pathname === "/" || url.pathname === "/index.html") {
-      return serveFile("index.html", "text/html; charset=utf-8");
-    }
+      },
+    },
+    "/state": {
+      GET: () =>
+        Response.json(snapshotPayload(), {
+          headers: { "cache-control": "no-store" },
+        }),
+    },
+    "/telemetry": {
+      GET: () =>
+        Response.json(telemetryPayload(), {
+          headers: { "cache-control": "no-store" },
+        }),
+    },
+    "/management/start": {
+      POST: () => {
+        startAgentDecisions("Agents started from controller page.");
+        return Response.json(telemetryPayload(), {
+          headers: { "cache-control": "no-store" },
+        });
+      },
+    },
+    "/management/stop": {
+      POST: async () => {
+        await stopAgentDecisions("Agents stopped from controller page.");
+        return Response.json(telemetryPayload(), {
+          headers: { "cache-control": "no-store" },
+        });
+      },
+    },
+    "/management/reset": {
+      POST: () => {
+        resetArenaSnapshot();
+        return Response.json(telemetryPayload(), {
+          headers: { "cache-control": "no-store" },
+        });
+      },
+    },
+    "/client.js": {
+      GET: () => serveFile("client.js"),
+    },
+    "/controller-panel.js": {
+      GET: () => serveFile("controller-panel.js"),
+    },
+    "/controllers": {
+      GET: () => serveFile("controllers.html"),
+    },
+    "/management": {
+      GET: () => serveFile("controllers.html"),
+    },
+    "/": {
+      GET: () => serveFile("index.html"),
+    },
+    "/index.html": {
+      GET: () => serveFile("index.html"),
+    },
+  },
+  fetch() {
     return new Response("Not found", { status: 404 });
   },
   websocket: {
@@ -310,9 +358,10 @@ const server = Bun.serve<SocketData>({
       if (
         ws.data.kind === "game" &&
         isRecord(parsed) &&
-        parsed.type === "arena.state"
+        parsed.type === "arena.state" &&
+        isArenaSnapshot(parsed.snapshot)
       ) {
-        arenaSnapshot = parsed.snapshot as ArenaSnapshot;
+        arenaSnapshot = parsed.snapshot;
         persistArenaSnapshot();
       }
     },
@@ -342,16 +391,8 @@ function upgrade(
   return new Response("WebSocket upgrade failed", { status: 400 });
 }
 
-async function serveFile(
-  fileName: string,
-  contentType: string,
-): Promise<Response> {
-  const body = await readFile(join(publicDir, fileName), "utf8");
-  return new Response(body, {
-    headers: {
-      "content-type": contentType,
-    },
-  });
+function serveFile(fileName: string): Response {
+  return new Response(Bun.file(join(publicDir, fileName)));
 }
 
 function initialArenaSnapshot(): ArenaSnapshot {
@@ -385,8 +426,8 @@ function initialArenaSnapshot(): ArenaSnapshot {
 }
 
 function loadArenaSnapshot(): ArenaSnapshot | undefined {
-  const row = kvGet.get("arenaSnapshot") as { value?: string } | null;
-  if (!row?.value) {
+  const row = kvGet.get("arenaSnapshot") as ArenaSnapshotRow | null;
+  if (!row) {
     return undefined;
   }
 
@@ -426,10 +467,42 @@ function broadcastArenaSnapshot(): void {
 function isArenaSnapshot(value: unknown): value is ArenaSnapshot {
   return (
     isRecord(value) &&
-    typeof value.mode === "string" &&
+    (value.mode === "playing" ||
+      value.mode === "paused" ||
+      value.mode === "finished") &&
     typeof value.timeRemaining === "number" &&
     Array.isArray(value.players) &&
-    Array.isArray(value.projectiles)
+    value.players.every(isArenaPlayer) &&
+    Array.isArray(value.projectiles) &&
+    value.projectiles.every(isProjectile)
+  );
+}
+
+function isArenaPlayer(
+  value: unknown,
+): value is ArenaSnapshot["players"][number] {
+  return (
+    isRecord(value) &&
+    (value.id === "player-1" || value.id === "player-2") &&
+    typeof value.x === "number" &&
+    typeof value.y === "number" &&
+    typeof value.hp === "number" &&
+    typeof value.facing === "number" &&
+    typeof value.grounded === "boolean" &&
+    typeof value.attacking === "boolean" &&
+    typeof value.blocking === "boolean"
+  );
+}
+
+function isProjectile(
+  value: unknown,
+): value is ArenaSnapshot["projectiles"][number] {
+  return (
+    isRecord(value) &&
+    (value.ownerId === "player-1" || value.ownerId === "player-2") &&
+    typeof value.x === "number" &&
+    typeof value.y === "number" &&
+    typeof value.vx === "number"
   );
 }
 
@@ -437,8 +510,11 @@ function receiveControllerMessage(playerId: PlayerId, message: unknown): void {
   if (!isRecord(message)) {
     return;
   }
-  if (message.type === "controller.command" && isRecord(message.command)) {
-    applyCommand(playerId, message.command as ControllerCommand);
+  if (
+    message.type === "controller.command" &&
+    isControllerCommand(message.command)
+  ) {
+    applyCommand(playerId, message.command);
     broadcastControllerStates();
     return;
   }
@@ -455,6 +531,34 @@ function receiveControllerMessage(playerId: PlayerId, message: unknown): void {
   if (message.type === "controller.neutral") {
     applyCommand(playerId, { type: "neutral" });
     broadcastControllerStates();
+  }
+}
+
+function isControllerCommand(value: unknown): value is ControllerCommand {
+  if (!isRecord(value) || typeof value.type !== "string") {
+    return false;
+  }
+  switch (value.type) {
+    case "press":
+    case "release":
+    case "setButton":
+    case "stick":
+    case "trigger":
+    case "setStick":
+    case "setTrigger":
+    case "dpad":
+    case "setDpad":
+    case "setState":
+    case "setStatus":
+    case "combo":
+    case "sequence":
+    case "wait":
+    case "touchpad":
+    case "motion":
+    case "neutral":
+      return true;
+    default:
+      return false;
   }
 }
 
@@ -828,7 +932,7 @@ function managementPayload() {
 }
 
 function loadRecentAgentEvents(limit: number) {
-  const rows = recentAgentEvents.all(limit) as Array<Record<string, unknown>>;
+  const rows = recentAgentEvents.all(limit) as RecentAgentEventRow[];
   return rows.map((row) => ({
     id: row.id,
     timestamp: row.timestamp,

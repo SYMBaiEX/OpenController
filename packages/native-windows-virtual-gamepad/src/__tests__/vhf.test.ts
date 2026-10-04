@@ -4,8 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   type ControllerState,
-  type NativeProcessBridgeSpawner,
   createController,
+  type NativeProcessBridgeSpawner,
 } from "@opencontroller/core";
 import { createNativeBridgeStateMessage } from "@opencontroller/core/bridge";
 import {

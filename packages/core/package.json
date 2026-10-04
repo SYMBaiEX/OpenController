@@ -13,7 +13,12 @@
     "url": "git+https://github.com/SYMBaiEX/OpenController.git",
     "directory": "packages/core"
   },
-  "keywords": ["ai", "controller", "gamepad", "opencontroller"],
+  "keywords": [
+    "ai",
+    "controller",
+    "gamepad",
+    "opencontroller"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -46,7 +51,11 @@
       "import": "./dist/browser.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "rm -rf dist tsconfig.tsbuildinfo && tsc -p tsconfig.json && node ../../scripts/fix-esm-extensions.mjs dist",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -57,7 +66,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@types/bun": "^1.2.15",
-    "typescript": "^5.8.3"
+    "@types/bun": "^1.4.2",
+    "typescript": "^7.0.2"
   }
 }

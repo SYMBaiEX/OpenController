@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 import {
+  formatMacosDriverKitSetupPlan,
   type MacosDriverKitBundleOptions,
   type MacosDriverKitReportProfile,
   type PrepareMacosDriverKitSetupOptions,
-  formatMacosDriverKitSetupPlan,
   prepareMacosDriverKitSetup,
 } from "../driverkit";
 

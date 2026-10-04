@@ -1,32 +1,32 @@
 import { createHidGamepadButtonMask } from "../hid/hid-buttons";
 import {
-  type HidGamepadLightReport,
   decodeHidGamepadLightReport,
   encodeHidGamepadLightReport,
+  type HidGamepadLightReport,
   hidGamepadLightReportByteLength,
   hidGamepadLightReportId,
 } from "../hid/hid-gamepad";
 import {
-  type HidPlayStationExtendedReport,
   createHidPlayStationExtendedReport,
   decodeHidPlayStationExtendedReport,
   encodeHidPlayStationExtendedReport,
+  type HidPlayStationExtendedReport,
   hidPlayStationExtendedReportsEqual,
   isHidPlayStationExtendedReport,
 } from "../hid/playstation";
 import {
-  type HidSwitchExtendedReport,
   createHidSwitchExtendedReport,
   decodeHidSwitchExtendedReport,
   encodeHidSwitchExtendedReport,
+  type HidSwitchExtendedReport,
   hidSwitchExtendedReportsEqual,
   isHidSwitchExtendedReport,
 } from "../hid/switch";
 import {
-  type XInputGamepadReport,
   createXInputReport,
   decodeXInputReport,
   encodeXInputReport,
+  type XInputGamepadReport,
 } from "../hid/xinput";
 import type {
   ControllerDeviceStatus,

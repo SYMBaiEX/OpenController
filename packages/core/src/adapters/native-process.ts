@@ -2,12 +2,12 @@ import { spawn as spawnChildProcess } from "node:child_process";
 import { Readable } from "node:stream";
 import {
   type CreateNativeBridgeStateMessageOptions,
-  type NativeBridgeConnectReportFormat,
-  type NativeBridgeDeviceInfo,
-  type NativeBridgeMessage,
   createNativeBridgeConnectMessage,
   createNativeBridgeDisconnectMessage,
   createNativeBridgeStateMessage,
+  type NativeBridgeConnectReportFormat,
+  type NativeBridgeDeviceInfo,
+  type NativeBridgeMessage,
   nativeBridgeFeedbackMessageToControllerFeedback,
   parseNativeBridgeMessage,
   serializeNativeBridgeMessage,

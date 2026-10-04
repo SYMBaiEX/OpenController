@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 import {
-  type PrepareWindowsVhfSetupOptions,
-  type WindowsVhfReportProfile,
   formatWindowsVhfSetupPlan,
+  type PrepareWindowsVhfSetupOptions,
   prepareWindowsVhfSetup,
+  type WindowsVhfReportProfile,
 } from "../vhf";
 
 type Flags = Record<string, string | boolean>;

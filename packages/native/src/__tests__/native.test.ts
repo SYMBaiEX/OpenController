@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
-  type NativeProcessBridgeSpawner,
   createController,
+  type NativeProcessBridgeSpawner,
 } from "@opencontroller/core";
 import {
   createNativeHostBridgeAdapter,

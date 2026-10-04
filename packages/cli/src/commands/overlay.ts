@@ -3,25 +3,22 @@ import {
   createController,
 } from "@opencontroller/core";
 import {
-  type OverlayThemeName,
   createOverlayServer,
+  type OverlayThemeName,
 } from "@opencontroller/overlay/server";
 
 export type OverlayCommandOptions = {
-  profile?: string;
+  profile?: Exclude<ControllerProfileName, "keyboard-mouse">;
   port?: string;
-  theme?: string;
+  theme?: OverlayThemeName;
 };
 
 export async function overlayCommand(
   options: OverlayCommandOptions,
 ): Promise<void> {
-  const profile = (options.profile ?? "xbox") as Exclude<
-    ControllerProfileName,
-    "keyboard-mouse"
-  >;
+  const profile = options.profile ?? "xbox";
   const port = Number.parseInt(options.port ?? "4317", 10);
-  const theme = (options.theme ?? "transparent") as OverlayThemeName;
+  const theme = options.theme ?? "transparent";
   const controller = await createController({
     profile,
     adapter: "dry-run",

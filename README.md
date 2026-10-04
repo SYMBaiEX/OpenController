@@ -87,6 +87,8 @@ online competitive game automation.
 
 ## Start Here
 
+Use Bun 1.4.2, pinned by the root `package.json`.
+
 Clone the repo, install dependencies, and run the flagship OpenController demo:
 
 ```bash

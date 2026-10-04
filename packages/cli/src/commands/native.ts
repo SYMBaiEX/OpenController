@@ -1,34 +1,34 @@
 import type { ControllerProfileName } from "@opencontroller/core";
 import { createController } from "@opencontroller/core";
 import {
+  createNativeHostBridgeAdapter,
   type NativeHostBridgeAdapterOptions,
   type NativeHostBridgeBackendId,
-  createNativeHostBridgeAdapter,
   resolveNativeHostBridgeBackend,
 } from "@opencontroller/native";
 import {
-  type LinuxUinputDiagnostics,
-  type LinuxUinputSetupPlan,
   diagnoseLinuxUinput,
   formatLinuxUinputDiagnostics,
   formatLinuxUinputSetupPlan,
+  type LinuxUinputDiagnostics,
+  type LinuxUinputSetupPlan,
   prepareLinuxUinputSetup,
 } from "@opencontroller/native-linux-uinput";
 import {
-  type MacosDriverKitDiagnostics,
-  type MacosDriverKitSetupPlan,
   diagnoseMacosDriverKit,
   formatMacosDriverKitDiagnostics,
   formatMacosDriverKitSetupPlan,
+  type MacosDriverKitDiagnostics,
+  type MacosDriverKitSetupPlan,
   prepareMacosDriverKitSetup,
 } from "@opencontroller/native-macos-driverkit";
 import {
-  type WindowsVhfSetupPlan,
-  type WindowsVirtualGamepadDiagnostics,
   diagnoseWindowsVirtualGamepad,
   formatWindowsVhfSetupPlan,
   formatWindowsVirtualGamepadDiagnostics,
   prepareWindowsVhfSetup,
+  type WindowsVhfSetupPlan,
+  type WindowsVirtualGamepadDiagnostics,
 } from "@opencontroller/native-windows-virtual-gamepad";
 
 export type NativeCommandFlags = Record<string, string | boolean | undefined>;

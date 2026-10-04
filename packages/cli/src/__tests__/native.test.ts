@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import {
-  type NativeBackendId,
-  type NativeBackendReport,
   createNativeTestPlan,
   diagnoseNativeBackends,
   formatNativeDoctor,
+  type NativeBackendId,
+  type NativeBackendReport,
   normalizeNativeBackendSelection,
   prepareNativeSetup,
   resolveNativeBackendIds,

@@ -1,10 +1,5 @@
 import { EventEmitter, type Unsubscribe } from "../events";
 import {
-  type HidGamepadLightEffect,
-  type HidGamepadLightReport,
-  type HidGamepadReport,
-  type HidGamepadRumbleEffect,
-  type HidGamepadRumbleReport,
   createHidGamepadLightReport,
   createHidGamepadReport,
   createHidGamepadRumbleReport,
@@ -13,18 +8,23 @@ import {
   encodeHidGamepadLightReport,
   encodeHidGamepadReport,
   encodeHidGamepadRumbleReport,
+  type HidGamepadLightEffect,
+  type HidGamepadLightReport,
+  type HidGamepadReport,
+  type HidGamepadRumbleEffect,
+  type HidGamepadRumbleReport,
   hidGamepadLightReportId,
   hidGamepadRumbleReportId,
 } from "../hid/hid-gamepad";
 import {
-  type HidPlayStationExtendedReport,
   createHidPlayStationExtendedReport,
   encodeHidPlayStationExtendedReport,
+  type HidPlayStationExtendedReport,
 } from "../hid/playstation";
 import {
-  type HidSwitchExtendedReport,
   createHidSwitchExtendedReport,
   encodeHidSwitchExtendedReport,
+  type HidSwitchExtendedReport,
 } from "../hid/switch";
 import type {
   ControllerFeedbackEvent,

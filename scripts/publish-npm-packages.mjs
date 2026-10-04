@@ -133,6 +133,8 @@ function parseArgs(args) {
   const parsed = {
     confirm: false,
     dryRun: false,
+    // This script is invoked directly, outside any Turbo-cached task.
+    // biome-ignore lint/suspicious/noUndeclaredEnvVars: OTP only affects the direct publish command.
     otp: process.env.NPM_OTP ?? process.env.NPM_CONFIG_OTP,
     tag: "latest",
     workspaces: [],

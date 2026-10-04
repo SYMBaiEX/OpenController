@@ -5,14 +5,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   type ControllerFeedbackEvent,
-  DryRunAdapter,
-  HidGamepadReportAdapter,
-  HidPlayStationExtendedReportAdapter,
-  HidSwitchExtendedReportAdapter,
-  NativeBridgeAdapter,
-  NativeProcessBridgeAdapter,
-  WebSocketAdapter,
-  XInputReportAdapter,
   createActionMap,
   createController,
   createControllerHub,
@@ -21,6 +13,7 @@ import {
   createNativeBridgeLightFeedbackMessage,
   createNativeBridgeRumbleFeedbackMessage,
   createNativeBridgeStateMessage,
+  DryRunAdapter,
   decodeHidGamepadLightReport,
   decodeHidGamepadReport,
   decodeHidGamepadRumbleReport,
@@ -33,6 +26,9 @@ import {
   encodeHidPlayStationExtendedReport,
   encodeHidSwitchExtendedReport,
   encodeXInputReport,
+  HidGamepadReportAdapter,
+  HidPlayStationExtendedReportAdapter,
+  HidSwitchExtendedReportAdapter,
   hidGamepadButtonBits,
   hidGamepadLightOutputReportDescriptor,
   hidGamepadLightReportByteLength,
@@ -53,6 +49,8 @@ import {
   hidSwitchExtendedReportDescriptor,
   hidSwitchExtendedReportDescriptorWithRumble,
   hidSwitchExtendedReportId,
+  NativeBridgeAdapter,
+  NativeProcessBridgeAdapter,
   nativeBridgeFeedbackMessageToControllerFeedback,
   nativeBridgeFeedbackMessageToLightReportBytes,
   nativeBridgeFeedbackMessageToRumbleReportBytes,
@@ -61,6 +59,8 @@ import {
   nativeBridgeMessageToReportBytes,
   parseNativeBridgeMessage,
   serializeNativeBridgeMessage,
+  WebSocketAdapter,
+  XInputReportAdapter,
   xInputButtonBits,
 } from "../index";
 
@@ -1624,10 +1624,7 @@ describe("controller runtime", () => {
     );
 
     expect(touchpadMessage?.type).toBe("opencontroller.bridge.state");
-    if (
-      !touchpadMessage ||
-      touchpadMessage.type !== "opencontroller.bridge.state"
-    ) {
+    if (touchpadMessage?.type !== "opencontroller.bridge.state") {
       throw new Error("Expected a native bridge touchpad extension message");
     }
     expect(touchpadMessage.state).toBeUndefined();
@@ -1651,10 +1648,7 @@ describe("controller runtime", () => {
     ).toBe(hidGamepadReportByteLength);
 
     expect(motionMessage?.type).toBe("opencontroller.bridge.state");
-    if (
-      !motionMessage ||
-      motionMessage.type !== "opencontroller.bridge.state"
-    ) {
+    if (motionMessage?.type !== "opencontroller.bridge.state") {
       throw new Error("Expected a native bridge motion extension message");
     }
     expect(motionMessage.extensions?.motion).toEqual({
@@ -1664,10 +1658,7 @@ describe("controller runtime", () => {
     });
 
     expect(profileHidMessage?.type).toBe("opencontroller.bridge.state");
-    if (
-      !profileHidMessage ||
-      profileHidMessage.type !== "opencontroller.bridge.state"
-    ) {
+    if (profileHidMessage?.type !== "opencontroller.bridge.state") {
       throw new Error("Expected a native bridge profile HID report message");
     }
     const profileHidBytes =
@@ -1740,10 +1731,7 @@ describe("controller runtime", () => {
       },
     });
     expect(legacyStateMessage?.type).toBe("opencontroller.bridge.state");
-    if (
-      !legacyStateMessage ||
-      legacyStateMessage.type !== "opencontroller.bridge.state"
-    ) {
+    if (legacyStateMessage?.type !== "opencontroller.bridge.state") {
       throw new Error("Expected a legacy native bridge state message");
     }
     expect(legacyStateMessage.state).toBeUndefined();
@@ -1791,10 +1779,7 @@ describe("controller runtime", () => {
       );
 
     expect(statusMessage?.type).toBe("opencontroller.bridge.state");
-    if (
-      !statusMessage ||
-      statusMessage.type !== "opencontroller.bridge.state"
-    ) {
+    if (statusMessage?.type !== "opencontroller.bridge.state") {
       throw new Error("Expected a native bridge status extension message");
     }
     expect(statusMessage.state).toBeUndefined();
@@ -1857,10 +1842,7 @@ describe("controller runtime", () => {
       );
 
     expect(profileHidMessage?.type).toBe("opencontroller.bridge.state");
-    if (
-      !profileHidMessage ||
-      profileHidMessage.type !== "opencontroller.bridge.state"
-    ) {
+    if (profileHidMessage?.type !== "opencontroller.bridge.state") {
       throw new Error("Expected a Switch native bridge profile HID message");
     }
     const profileHidBytes =
@@ -1912,7 +1894,7 @@ describe("controller runtime", () => {
       hidGamepadButtonBits.HOME,
     );
     expect(guidePressed?.type).toBe("opencontroller.bridge.state");
-    if (!guidePressed || guidePressed.type !== "opencontroller.bridge.state") {
+    if (guidePressed?.type !== "opencontroller.bridge.state") {
       throw new Error("Expected a GUIDE-pressed native bridge state message");
     }
     expect(guidePressed.report.buttons & hidGamepadButtonBits.HOME).toBe(0);
@@ -1967,7 +1949,7 @@ describe("controller runtime", () => {
       ),
     ).toHaveLength(1);
     expect(aPressed?.type).toBe("opencontroller.bridge.state");
-    if (!aPressed || aPressed.type !== "opencontroller.bridge.state") {
+    if (aPressed?.type !== "opencontroller.bridge.state") {
       throw new Error("Expected an A-pressed native bridge state message");
     }
 

@@ -1,9 +1,9 @@
 import {
   ConnectionDot,
   ControlCircle,
+  isPressed,
   type OverlayCommonProps,
   Stick,
-  isPressed,
 } from "./shared";
 
 export function GenericOverlay(props: OverlayCommonProps) {

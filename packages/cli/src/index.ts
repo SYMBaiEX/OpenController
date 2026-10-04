@@ -21,10 +21,55 @@ async function main(argv: string[]): Promise<void> {
       await doctorCommand();
       return;
     case "test":
-      await testCommand(stringFlags(flags));
+      await testCommand({
+        ...defined(
+          "profile",
+          parseChoice(flags.profile, "profile", [
+            "xbox",
+            "playstation",
+            "switch",
+            "generic-hid",
+            "keyboard-mouse",
+          ] as const),
+        ),
+        ...defined(
+          "adapter",
+          parseChoice(flags.adapter, "adapter", [
+            "dry-run",
+            "websocket",
+            "xinput-report",
+            "hid-gamepad-report",
+            "hid-playstation-extended-report",
+            "hid-switch-extended-report",
+            "native-bridge",
+          ] as const),
+        ),
+        ...defined("url", optionalStringFlag(flags.url, "url")),
+      });
       return;
     case "overlay":
-      await overlayCommand(stringFlags(flags));
+      await overlayCommand({
+        ...defined(
+          "profile",
+          parseChoice(flags.profile, "profile", [
+            "xbox",
+            "playstation",
+            "switch",
+            "generic-hid",
+          ] as const),
+        ),
+        ...defined("port", optionalStringFlag(flags.port, "port")),
+        ...defined(
+          "theme",
+          parseChoice(flags.theme, "theme", [
+            "default",
+            "dark",
+            "light",
+            "neon",
+            "transparent",
+          ] as const),
+        ),
+      });
       return;
     case "replay":
       await replayCommand(rest.find((arg) => !arg.startsWith("--")));
@@ -33,7 +78,7 @@ async function main(argv: string[]): Promise<void> {
       await doctorCommand();
       return;
     case "bridge":
-      await bridgeCommand(stringFlags(flags));
+      await bridgeCommand(defined("id", optionalStringFlag(flags.id, "id")));
       return;
     case "native":
       await nativeCommand(rest, flags);
@@ -77,12 +122,42 @@ function parseFlags(args: string[]): Flags {
   return flags;
 }
 
-function stringFlags(flags: Flags): Record<string, string | undefined> {
-  const result: Record<string, string | undefined> = {};
-  for (const [key, value] of Object.entries(flags)) {
-    result[key] = typeof value === "string" ? value : undefined;
+function parseChoice<const TChoices extends readonly string[]>(
+  value: string | boolean | undefined,
+  flag: string,
+  choices: TChoices,
+): TChoices[number] | undefined {
+  if (value === undefined) {
+    return undefined;
   }
-  return result;
+  if (typeof value !== "string" || !choices.includes(value)) {
+    throw new Error(
+      `Invalid --${flag}; expected one of: ${choices.join(", ")}`,
+    );
+  }
+  return value;
+}
+
+function optionalStringFlag(
+  value: string | boolean | undefined,
+  flag: string,
+): string | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (typeof value !== "string") {
+    throw new Error(`--${flag} requires a value`);
+  }
+  return value;
+}
+
+function defined<TKey extends string, TValue>(
+  key: TKey,
+  value: TValue | undefined,
+): { [K in TKey]?: TValue } {
+  return value === undefined
+    ? {}
+    : ({ [key]: value } as { [K in TKey]?: TValue });
 }
 
 function printHelp(): void {

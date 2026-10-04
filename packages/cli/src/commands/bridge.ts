@@ -1,4 +1,4 @@
-import { NativeBridgeAdapter, createController } from "@opencontroller/core";
+import { createController, NativeBridgeAdapter } from "@opencontroller/core";
 
 export type BridgeCommandOptions = {
   id?: string;

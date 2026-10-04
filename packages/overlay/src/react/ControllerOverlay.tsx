@@ -8,8 +8,8 @@ import { type OverlayThemeName, resolveOverlayTheme } from "../themes";
 import { GenericOverlay } from "./GenericOverlay";
 import { PlayStationOverlay } from "./PlayStationOverlay";
 import { SwitchOverlay } from "./SwitchOverlay";
-import { XboxOverlay } from "./XboxOverlay";
 import { type OverlaySize, type OverlayVariant, sizeWidths } from "./shared";
+import { XboxOverlay } from "./XboxOverlay";
 
 export type ControllerOverlayProps = {
   profile: Exclude<ControllerProfileName, "keyboard-mouse">;

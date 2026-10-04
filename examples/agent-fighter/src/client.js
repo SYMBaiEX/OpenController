@@ -347,7 +347,7 @@ function keyboardState(playerId) {
 
 function readGamepadState(index) {
   const pad = navigator.getGamepads?.()[index];
-  if (!pad || !pad.connected || pad.mapping !== "standard") {
+  if (!pad?.connected || pad.mapping !== "standard") {
     return undefined;
   }
   const button = (buttonIndex) => Boolean(pad.buttons[buttonIndex]?.pressed);

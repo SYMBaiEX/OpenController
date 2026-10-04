@@ -4,15 +4,15 @@ import {
   nativeBridgeMessageToProfileHidReportBytes,
 } from "@opencontroller/core/bridge";
 import {
-  type HidGamepadReport,
-  type HidPlayStationExtendedReport,
-  type HidSwitchExtendedReport,
-  type XInputGamepadReport,
   createHidGamepadReport,
   decodeHidGamepadReport,
   decodeHidPlayStationExtendedReport,
   decodeHidSwitchExtendedReport,
+  type HidGamepadReport,
+  type HidPlayStationExtendedReport,
+  type HidSwitchExtendedReport,
   hidGamepadButtonBits,
+  type XInputGamepadReport,
   xInputButtonBits,
 } from "@opencontroller/core/hid";
 
