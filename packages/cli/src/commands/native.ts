@@ -357,9 +357,17 @@ export async function runNativeTest<State>(
   }
 
   if (actionFailed && disconnectFailed) {
+    const actionMessage =
+      actionFailure instanceof Error
+        ? actionFailure.message
+        : String(actionFailure);
+    const disconnectMessage =
+      disconnectFailure instanceof Error
+        ? disconnectFailure.message
+        : String(disconnectFailure);
     throw new AggregateError(
       [actionFailure, disconnectFailure],
-      "Native test action failed and controller disconnect also failed",
+      `Primary native test failure: ${actionMessage}\nController disconnect/cleanup failure: ${disconnectMessage}`,
       { cause: actionFailure },
     );
   }

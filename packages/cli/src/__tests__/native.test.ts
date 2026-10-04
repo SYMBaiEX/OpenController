@@ -97,6 +97,9 @@ describe("native backend test runner", () => {
 
     expect(caught).toBeInstanceOf(AggregateError);
     if (caught instanceof AggregateError) {
+      expect(caught.message).toBe(
+        "Primary native test failure: native test action failed\nController disconnect/cleanup failure: native test disconnect failed",
+      );
       expect(caught.errors).toEqual([
         fixture.actionError,
         fixture.disconnectError,
