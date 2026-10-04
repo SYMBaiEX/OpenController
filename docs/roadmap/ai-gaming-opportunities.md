@@ -1,6 +1,6 @@
 # OpenController AI and Gaming Opportunity Goal
 
-**Status:** Cycle 1 is merged to `main` as PRs #1–#4. Cycle 2 issues [#8](https://github.com/SYMBaiEX/OpenController/issues/8) and [#9](https://github.com/SYMBaiEX/OpenController/issues/9) were implemented and merged in [PR #12](https://github.com/SYMBaiEX/OpenController/pull/12) (`067fc591fe34e7d09cfdfedcf8db48fcd6a7c0d1`) and [PR #13](https://github.com/SYMBaiEX/OpenController/pull/13) (`5f7e6fc7054654f220a6cb45a4c438ae0d9e4ae7`); [#10](https://github.com/SYMBaiEX/OpenController/issues/10) remains deferred. Cycle 3 research is gated by [issue #16](https://github.com/SYMBaiEX/OpenController/issues/16), with candidate issues [#14](https://github.com/SYMBaiEX/OpenController/issues/14) and [#15](https://github.com/SYMBaiEX/OpenController/issues/15) deferred pending that gate. Metric baselines remain deferred because the runner did not produce reliable outcomes, and Reddit/accessibility evidence gaps remain open.
+**Status:** Cycle 1 is merged to `main` as PRs #1–#4. Cycle 2 issues [#8](https://github.com/SYMBaiEX/OpenController/issues/8) and [#9](https://github.com/SYMBaiEX/OpenController/issues/9) were implemented and merged in [PR #12](https://github.com/SYMBaiEX/OpenController/pull/12) (`067fc591fe34e7d09cfdfedcf8db48fcd6a7c0d1`) and [PR #13](https://github.com/SYMBaiEX/OpenController/pull/13) (`5f7e6fc7054654f220a6cb45a4c438ae0d9e4ae7`); [#10](https://github.com/SYMBaiEX/OpenController/issues/10) remains deferred. The Cycle 3 research gate [#16](https://github.com/SYMBaiEX/OpenController/issues/16) selected [#14](https://github.com/SYMBaiEX/OpenController/issues/14) for a preventive CI-integrity slice; [#15](https://github.com/SYMBaiEX/OpenController/issues/15) is deferred outside the active milestone. Metric baselines remain deferred because the runner did not produce reliable outcomes, and Reddit/accessibility evidence gaps remain open.
 
 ## Product goal
 
@@ -229,9 +229,41 @@ Post-merge validation on the combined `main` state: lint checked 140 files; type
 
 The Cycle 2 source log remains a targeted sample, not a market survey or prevalence estimate. Its Reddit/accessibility coverage gaps and upstream ownership limits remain in force.
 
-## Cycle 3 — research gate
+## Cycle 3 — research decision (2026-10-04)
 
-[Issue #16](https://github.com/SYMBaiEX/OpenController/issues/16) is the research and ranking gate for Cycle 3. Candidate [#14 — keep key SDK documentation examples runnable](https://github.com/SYMBaiEX/OpenController/issues/14) is deferred pending that gate; its single FLE report shows a concrete failure mode in another project, not an OpenController documentation defect. Candidate [#15 — make Agent Fighter keyboard bindings configurable](https://github.com/SYMBaiEX/OpenController/issues/15) is exploratory and deferred pending that gate; its single report concerns a different demo, and the current Agent Fighter already supports arrow-key movement for player two. Neither issue is build approval. Refresh the evidence and assess repository fit before selecting either; a no-build decision remains valid.
+The research and ranking gate in [issue #16](https://github.com/SYMBaiEX/OpenController/issues/16) is complete. It selected [#14 — keep key SDK documentation examples runnable](https://github.com/SYMBaiEX/OpenController/issues/14) for a bounded, preventive CI-integrity slice, and deferred [#15 — make Agent Fighter keyboard bindings configurable](https://github.com/SYMBaiEX/OpenController/issues/15) outside the active milestone. This is a research selection; #14 is not yet implemented.
+
+### Refreshed evidence and limits
+
+The dated public reports below informed the gate. They are targeted examples, not a survey or prevalence estimate; reports from another project do not establish a defect or demand in OpenController.
+
+| Source and date | Direct evidence | Interpretation and limits |
+| --- | --- | --- |
+| [Factorio Learning Environment issue #418](https://github.com/JackHopkins/factorio-learning-environment/issues/418), 2026-09-15 | A reporter said four documented agent API examples failed against a live headless server; no working workaround was recorded. | Concrete documentation failure in another project. It does not show that OpenController examples are stale. It supports checking the validity of examples that this repository owns. |
+| [Accessible-Chess issue #5](https://github.com/Oleksii-debug/Accessible-Chess/issues/5), 2026-08-14 | Requests app-owned remappable shortcuts and command aliases, conflict warnings, and keyboard-only recovery/reset. | Accessibility-focused evidence from another product. Its 20 comments include owner status and implementation updates, not 20 independent confirmations; it does not establish Agent Fighter demand. |
+| [Hacker News comment #48624304](https://news.ycombinator.com/item?id=48624304), 2026-06-22, discussing an [OpenAssistiveTech article](https://www.openassistivetech.org/how-i-actually-play-video-games-with-sma-the-tools-i-use-every-day/) dated 2026-06-18 | The commenter recounts a friend with a broken arm being banned for third-party keyboard-remapping software while trying to play one-handed. | Indirect single anecdote about third-party remapping policy, not a request for app-owned controls or evidence about Agent Fighter. The article fetch returned HTTP 403; only the comment was reviewed. |
+| [OpenAI developer forum demo thread](https://community.openai.com/t/show-2d-game-built-using-codex-and-agent-skills-zero-code/1374319), 2026-02-16 | A player could not move with arrows because that demo mapped only WASD; the author added arrow and space mappings. | One report about a different demo. Agent Fighter already supports arrow-key movement for player two, so this is not evidence of the same defect here. |
+
+Coverage is incomplete: Reddit search and DuckDuckGo returned HTTP 403 on 2026-10-04, and Steam Community search returned a generic page without a useful dated result. The assistive-gaming article also returned HTTP 403. The accessible reports concern other projects or products; no direct accessibility evidence about Agent Fighter was found. The sweep is targeted and cannot estimate prevalence.
+
+### Repository audit and selection
+
+The audit inspected `main` at `ba0529e`, onboarding docs, example entry points, root scripts, and CI. The Getting Started dry-run flow and AI Agent Integration action-map/state-patch snippets are not executed by tests. Root tests cover package suites, not docs snippets or example packages; `examples/basic-dry-run/index.ts` is runnable but has no test or build script. Agent Fighter has a Playwright headless match runner and quality gates, but they do not execute SDK docs or validate keyboard remapping. Player two already has arrow-key movement; `R` resets and `F` toggles fullscreen. The verified gap is missing executable documentation coverage, not a confirmed stale OpenController snippet.
+
+**Selected: #14, preventive CI integrity.** Exercise shared sources for the Getting Started dry-run path, one AI action-map/state-patch path, and the basic dry-run example. Assert observable state, action, or replay behavior. The slice should need no API key, device, OS permission, or live game; it should not claim to verify native, OBS, game, or hardware behavior. Estimated effort is low to medium (1–2 days).
+
+**Deferred: #15.** The accessibility evidence supports remapping as a concern in other products but does not identify an Agent Fighter problem, and its second player already supports arrows. A configurable UI also requires persistence, conflict handling, recovery, and browser testing (estimated 2–4 days), while browser/OS shortcut detection is incomplete. Revisit if stronger direct fit or evidence emerges.
+
+```mermaid
+flowchart TD
+  A[Refresh dated evidence and record coverage limits] --> C[Cycle 3 gate #16 selects bounded work]
+  B[Audit current repository behavior and test coverage] --> C
+  C --> D[Implement issue #14: executable dry-run documentation checks]
+  D --> E[Independent review and focused/integrated validation]
+  E --> F[Open implementation PR against current main]
+  F --> G[Merge after review and required checks pass]
+  C -. deferred outside active milestone .-> H[Issue #15: configurable Agent Fighter keyboard bindings]
+```
 
 ## Branch and swarm operating rules
 
