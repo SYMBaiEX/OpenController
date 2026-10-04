@@ -1,5 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  link,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Writable } from "node:stream";
@@ -86,6 +93,62 @@ describe("replay export", () => {
       await expect(
         exportReplay(input, { format: "json", output: "-" }, stdout),
       ).rejects.toThrow(`Invalid JSON in replay file ${input} at line 2`);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  test("rejects symlink and hardlink aliases without truncating the replay", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "opencontroller-replay-"));
+    const input = join(directory, "events.jsonl");
+    const hardLink = join(directory, "hard-link.jsonl");
+    const symbolicLink = join(directory, "symbolic-link.jsonl");
+    const content = '{"type":"annotation","timestamp":1,"label":"keep"}\n';
+
+    try {
+      await writeFile(input, content);
+      await link(input, hardLink);
+      let supportsSymlinks = true;
+      try {
+        await symlink(input, symbolicLink);
+      } catch (error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        if (
+          !["EACCES", "ENOSYS", "ENOTSUP", "EOPNOTSUPP", "EPERM"].includes(
+            code ?? "",
+          )
+        ) {
+          throw error;
+        }
+        supportsSymlinks = false;
+      }
+
+      await expect(
+        exportReplay(input, { format: "json", output: hardLink }),
+      ).rejects.toThrow("input and output paths must be different");
+      if (supportsSymlinks) {
+        await expect(
+          exportReplay(input, { format: "json", output: symbolicLink }),
+        ).rejects.toThrow("input and output paths must be different");
+      }
+      expect(await readFile(input, "utf8")).toBe(content);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  test("missing input leaves an existing destination unchanged", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "opencontroller-replay-"));
+    const input = join(directory, "missing.jsonl");
+    const output = join(directory, "existing.json");
+    const original = "keep existing destination\n";
+
+    try {
+      await writeFile(output, original);
+      await expect(
+        exportReplay(input, { format: "json", output }),
+      ).rejects.toThrow();
+      expect(await readFile(output, "utf8")).toBe(original);
     } finally {
       await rm(directory, { recursive: true, force: true });
     }

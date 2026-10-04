@@ -1,6 +1,7 @@
 import { once } from "node:events";
-import { createReadStream, createWriteStream } from "node:fs";
-import { resolve } from "node:path";
+import type { FileHandle } from "node:fs/promises";
+import { open, realpath, stat } from "node:fs/promises";
+import { basename, dirname, join, resolve } from "node:path";
 import { createInterface } from "node:readline";
 import type { Writable } from "node:stream";
 import { finished } from "node:stream/promises";
@@ -37,27 +38,33 @@ export async function exportReplay(
   stdout: Writable = process.stdout,
 ): Promise<void> {
   const outputPath = options.output;
-  if (
-    outputPath &&
-    outputPath !== "-" &&
-    resolve(outputPath) === resolve(inputPath)
-  ) {
-    throw new Error("Replay export input and output paths must be different");
-  }
-
-  const output =
-    outputPath && outputPath !== "-"
-      ? createWriteStream(outputPath, { encoding: "utf8" })
-      : stdout;
-  const closeOutput = output !== stdout;
-  const lines = createInterface({
-    input: createReadStream(inputPath),
-    crlfDelay: Number.POSITIVE_INFINITY,
-  });
-  let lineNumber = 0;
-  let first = true;
+  const input = await open(inputPath, "r");
+  let inputStream: ReturnType<FileHandle["createReadStream"]> | undefined;
+  let outputHandle: FileHandle | undefined;
+  let outputStream: ReturnType<FileHandle["createWriteStream"]> | undefined;
+  let lines: ReturnType<typeof createInterface> | undefined;
 
   try {
+    const inputStat = await input.stat();
+    if (!inputStat.isFile()) {
+      throw new Error(`Replay input is not a regular file: ${inputPath}`);
+    }
+    const inputRealPath = await realpath(inputPath);
+    if (outputPath && outputPath !== "-") {
+      outputHandle = await openSafeOutput(outputPath, inputRealPath, inputStat);
+      outputStream = outputHandle.createWriteStream({ encoding: "utf8" });
+    }
+
+    // The input is already opened and confirmed before any output is created or truncated.
+    inputStream = input.createReadStream();
+    const output = outputStream ?? stdout;
+    lines = createInterface({
+      input: inputStream,
+      crlfDelay: Number.POSITIVE_INFINITY,
+    });
+    let lineNumber = 0;
+    let first = true;
+
     if (options.format === "json") await write(output, "[\n");
     else await write(output, `${csvColumns.join(",")}\n`);
 
@@ -81,15 +88,87 @@ export async function exportReplay(
     }
 
     if (options.format === "json") await write(output, "\n]\n");
-    if (closeOutput) {
+    if (outputStream) {
       output.end();
       await finished(output);
     }
   } catch (error) {
-    lines.close();
-    if (closeOutput) output.destroy();
+    lines?.close();
+    inputStream?.destroy();
+    outputStream?.destroy();
+    if (outputHandle && !outputStream) await outputHandle.close();
+    if (!inputStream) await input.close();
     throw error;
   }
+}
+
+async function openSafeOutput(
+  outputPath: string,
+  inputRealPath: string,
+  inputStat: Awaited<ReturnType<FileHandle["stat"]>>,
+): Promise<FileHandle> {
+  const resolvedOutputPath = resolve(outputPath);
+  try {
+    const outputRealPath = await realpath(resolvedOutputPath);
+    const existingStat = await stat(resolvedOutputPath);
+    rejectAlias(
+      outputRealPath === inputRealPath || sameFile(existingStat, inputStat),
+    );
+    if (!existingStat.isFile()) {
+      throw new Error(
+        `Replay export destination is not a regular file: ${outputPath}`,
+      );
+    }
+
+    // Open without truncating, then verify the opened inode to cover path races.
+    const handle = await open(resolvedOutputPath, "r+");
+    try {
+      const openedStat = await handle.stat();
+      rejectAlias(sameFile(openedStat, inputStat));
+      if (!openedStat.isFile()) {
+        throw new Error(
+          `Replay export destination is not a regular file: ${outputPath}`,
+        );
+      }
+      await handle.truncate(0);
+      return handle;
+    } catch (error) {
+      await handle.close();
+      throw error;
+    }
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+  }
+
+  const canonicalParent = await realpath(dirname(resolvedOutputPath));
+  const canonicalOutputPath = join(
+    canonicalParent,
+    basename(resolvedOutputPath),
+  );
+  rejectAlias(canonicalOutputPath === inputRealPath);
+
+  // wx avoids following a symlink or truncating a path created after preflight.
+  const handle = await open(resolvedOutputPath, "wx");
+  try {
+    rejectAlias(sameFile(await handle.stat(), inputStat));
+    return handle;
+  } catch (error) {
+    await handle.close();
+    throw error;
+  }
+}
+
+function rejectAlias(alias: boolean): void {
+  if (alias) {
+    throw new Error("Replay export input and output paths must be different");
+  }
+}
+
+function sameFile(
+  left: { dev: number | bigint; ino: number | bigint },
+  right: { dev: number | bigint; ino: number | bigint },
+): boolean {
+  return left.dev === right.dev && left.ino === right.ino;
 }
 
 export async function replayExportCommand(
