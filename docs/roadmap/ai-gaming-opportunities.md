@@ -1,19 +1,12 @@
 # OpenController AI and Gaming Opportunity Goal
 
-**Status:** discovery in progress; external community evidence is blocked pending
-environment network publication. Repository findings below are verified against
-the checkout at `d6e9e86` (2026-10-04). Community demand is not yet verified.
+**Status:** targeted community sweep completed with documented coverage gaps; three implementation branches are in progress. External evidence was checked on 2026-10-04. Integrated review remains pending.
 
 ## Product goal
 
-Make it straightforward to connect an AI or game test agent to a controller,
-understand what the host can support, and reproduce what happened when a run
-fails. Improve the existing native bring-up and headless/replay workflows first;
-keep privileged driver installation, game perception, and provider-specific
-agent frameworks outside the first delivery.
+Make OpenController dependable when a game or agent needs an OS-visible controller: explain what the host can support, make input failures diagnosable, and let teams reproduce and compare runs. Prioritize native-device readiness and repeatable headless/replay workflows. Keep driver installation, game perception, and game-specific high-level APIs outside the SDK's first delivery.
 
-This is a provisional goal based on the repository's stated roadmap and current
-capabilities. Revisit its priority after the public source sweep is available.
+The goal is grounded in both the repository roadmap and a targeted public-source sweep. The evidence supports concrete compatibility and evaluation friction; it does not establish market-wide prevalence.
 
 ## Evidence boundary
 
@@ -30,119 +23,127 @@ capabilities. Revisit its priority after the public source sweep is available.
 
 ### External research state
 
-On 2026-10-04, requests to Reddit, the GitHub API, Hacker News/Algolia, and
-Steam Community failed with `CONNECT tunnel failed, response 403`. No browser or
-search connector is available in this task. The environment's custom egress
-draft was updated to allow the targeted public-source hosts, but the draft
-requires user review and publication before requests can succeed. No forum post,
-issue, trend, or recurrence count is claimed in this document.
+The targeted sweep ran on 2026-10-04 across SDL and Steam for Linux GitHub issues, Steam Community discussions, Factorio Learning Environment reports, Hacker News, and the OpenAI developer forum. It found repeated examples of device-specific mapping/initialization failures, host permission or virtual-device lifecycle friction, and hard-to-reproduce agent-evaluation errors. Treat these as recurring categories in the reviewed sources, not prevalence estimates.
 
-Planned source sweep after publication:
+Coverage is incomplete. Reddit endpoints return an HTTP 403 network-security page, so no Reddit posts were reviewed. GamingOnLinux search returned the homepage without results; its latest RSS feed had no relevant controller/gamepad/Steam Input items. Search results were targeted samples, not an exhaustive read of every forum, repository, or historical thread. Thread replies/reactions measure attention to that report, not affected-user counts.
 
-| Community | Starting point / query | Status |
+#### Source log
+
+| Source and date | Direct evidence | Observed pain and evidence limits |
 | --- | --- | --- |
-| Reddit gaming | [r/Steam: controller not detected](https://www.reddit.com/r/Steam/search/?q=controller%20not%20detected&restrict_sr=1) | Blocked; not reviewed |
-| Reddit Linux gaming | [r/linux_gaming: Steam Input/controller](https://www.reddit.com/r/linux_gaming/search/?q=controller%20steam%20input&restrict_sr=1) | Blocked; not reviewed |
-| Reddit accessibility | [r/disabledgamers: remapping](https://www.reddit.com/r/disabledgamers/search/?q=controller%20remapping&restrict_sr=1) | Blocked; not reviewed |
-| Steam Community | [controller discussions](https://steamcommunity.com/discussions/forum/1/) | Blocked; not reviewed |
-| GitHub | [SDL gamepad/controller issues](https://github.com/libsdl-org/SDL/issues?q=gamepad+controller) and game-agent repos | Blocked; not reviewed |
-| Hacker News | [Algolia search for AI game agents](https://hn.algolia.com/?q=AI%20game%20agent) | Blocked; not reviewed |
-| AI developer forum | [OpenAI developer community](https://community.openai.com/) | Blocked; not reviewed |
-| Linux gaming forum | [GamingOnLinux](https://www.gamingonlinux.com/) | Blocked; not reviewed |
+| SDL issue #16441, 2026-10-04 | [8BitDo Ultimate 2C rejected over Bluetooth](https://github.com/libsdl-org/SDL/issues/16441), 0 comments when checked | A Bluetooth PID not recognized by SDL's 8BitDo driver prevents this device mode from initializing. Specific hardware report; no recurrence shown in the thread. |
+| SDL issue #16434, 2026-10-03 | [GameSir T3s calibration reply length](https://github.com/libsdl-org/SDL/issues/16434), 0 comments | Switch-mode controller is detected on Linux but fails HIDAPI initialization because the calibration reply has a different length. Specific device/protocol case. |
+| SDL issue #16400, 2026-09-28 | [Steam Controller remains in lizard mode](https://github.com/libsdl-org/SDL/issues/16400), 0 comments | Keyboard/mouse fallback and gamepad events conflict. A new, single report. |
+| SDL issue #16237, 2026-09-03 | [Betop motion data is NaN in SDL3](https://github.com/libsdl-org/SDL/issues/16237), 4 comments | Buttons/rumble work while gyro/accelerometer data is unusable; reporter compares SDL2 and SDL3. |
+| SDL issue #15658, 2026-05-20 | [8BitDo triggers lack analog input](https://github.com/libsdl-org/SDL/issues/15658), 7 comments | SDL/Steam expose non-analog triggers where a browser gamepad tester reports values. Shows API/backend differences for a particular controller, not all devices. |
+| Steam for Linux issue #10442, 2024-01-28 | [Wayland asks to allow remote interaction](https://github.com/ValveSoftware/steam-for-linux/issues/10442), 130 comments, 118 reactions | Fedora/GNOME Wayland consent blocks using an Xbox controller as a mouse. High-engagement thread; engagement is not a rate estimate. |
+| Steam for Linux issue #13665, 2026-09-29 | [Game Mode recreation silently drops controller input](https://github.com/ValveSoftware/steam-for-linux/issues/13665), 0 comments | Launching an app can recreate Steam Input's virtual gamepad and leave other running apps without input. Recent singleton report. |
+| Steam for Linux issue #13029, 2026-03-23 | [ASUS HID events reset the Steam virtual gamepad](https://github.com/ValveSoftware/steam-for-linux/issues/13029), 4 comments | Reporter observes input reset across several games after an unrelated device event; one reporter, several affected titles. |
+| Steam Deck discussion, 2026-08-04 | [GameSir G7 Pro rumble missing on SteamOS](https://steamcommunity.com/app/1675200/discussions/1/580552797772062608/), 2 replies | Dongle input works but rumble is lost; author and one commenter report the same symptom. |
+| Steam Deck discussion, 2026-09-26 | [Controller order breaks while docked](https://steamcommunity.com/app/1675200/discussions/1/806848045381749056/), 10 replies | Docked Legion Go S with two Xbox pads reports unusable controller ordering; replies add context. One thread, not prevalence data. |
+| Steam Deck feature request, 2026-09-30 | [Expose Steam Deck as a Bluetooth controller](https://steamcommunity.com/app/1675200/discussions/2/585061535403037013/), 0 replies | One request for a virtual-controller mode. Low-confidence demand signal. |
+| Factorio Learning Environment issue #417, 2026-09-14 | [Client-join blockers and misleading errors](https://github.com/JackHopkins/factorio-learning-environment/issues/417), 1 comment | Agent-evaluation user reports dependency and client-join failures, swallowed errors, and camera/event-handler problems; local patches were the workaround. Strong report detail, one environment. |
+| Factorio Learning Environment issue #418, 2026-09-15 | [Agent-facing examples do not run](https://github.com/JackHopkins/factorio-learning-environment/issues/418), 0 comments | Several documented examples fail against a live headless server. Single project report; supports clear, executable action docs, not controller transport specifically. |
+| Factorio Learning Environment PR #413, 2026-09-07 | [Retry and error handling for transient observations](https://github.com/JackHopkins/factorio-learning-environment/pull/413), 0 comments | A long evaluation rollout failed on a transient observation error; the underlying cause was hidden and healthy epochs were cancelled. Same action sequence later replayed successfully; retries and surfaced errors were the fix. This is a merged fix PR, not an open request. |
+| OpenAI developer forum, 2026-02-16 | [2D game built with Codex and agent skills](https://community.openai.com/t/show-2d-game-built-using-codex-and-agent-skills-zero-code/1374319), 7 replies | A player could not move with arrows because only WASD was mapped; author added arrow/space mappings. Concrete action-map friction, but a human-player demo rather than an SDK user report. |
+| OpenAI developer forum, 2026-09-29 | [Autonomous assistant for PC gamers](https://community.openai.com/t/autonomous-agent-assistant-for-pc-gamers/1402066), 1 reply | One gamer says manual state descriptions and screenshots are cumbersome and asks about temporary controller takeover. Perception/memory interest is outside this SDK's current scope. |
+| Hacker News, 2025-03-11 | [Factorio Learning Environment launch](https://news.ycombinator.com/item?id=43331582), 749 points, 209 comments | Strong interest in game-agent benchmarking and long-horizon automation. A launch discussion, not a pain-point survey; the environment exposes high-level game actions rather than a virtual gamepad. |
+| Hacker News, 2026-09-11 | [Clawfight agentic game](https://news.ycombinator.com/item?id=49658483), 13 points, 17 comments | Creator says Unreal-based remote control quality was not good enough and describes a near-real-time video approach. The reported quality issue is ambiguous, so fit to controller transport is low. |
 
-For each recurring signal, record a direct post/issue URL, publication date,
-persona and situation, repeated independent reports, workaround, severity
-indicators, counterexamples, and confidence. Search entry pages are discovery
-leads, not evidence by themselves.
+#### Cross-source interpretation
 
-## Provisional opportunity backlog
+| Candidate theme | Evidence and confidence | Product interpretation |
+| --- | --- | --- |
+| Host permissions, controller identity/mapping, and virtual-device lifecycle | Several distinct SDL and Steam reports across 2024-2026, plus Steam Deck reports. **Moderate confidence** that this is a recurring integration category; prevalence and the fraction OpenController can fix are unknown. | Prioritize clear host/helper readiness output and follow with a compatibility test matrix. SDL or Steam-owned mapping bugs must be fixed upstream. |
+| Reproducing failed agent runs and making errors actionable | Three adjacent FLE evaluation reports discuss setup, transient observation failures, hidden errors, and replaying the same sequence. **Moderate confidence** in the workflow friction; one benchmark ecosystem, medium project fit. | Replay export and deterministic baselines are direct, bounded improvements to existing OpenController capabilities. They do not reproduce screenshots or game state the SDK never recorded. |
+| Consistent action mapping and broader game control | SDL has device-specific mapping reports; one OpenAI forum game demo needed arrow-key support. **Low-to-moderate confidence**; several examples but different users and layers. | Document normalized action maps and test consumer-visible profiles. Do not claim a universal mapping can repair every title. |
+| Screen understanding, memory, and high-level game APIs | One gamer requested these; high-engagement HN game-agent launches use game-domain APIs. Evidence is mixed and mostly adjacent. | Keep perception, model planning, and game-specific integrations optional or out of scope. Many agent environments do not need a controller emulator. |
 
-Demand confidence remains **unknown** for every item until community sources are
-reviewed. Current ordering reflects explicit roadmap support, code proximity,
-and delivery feasibility only.
+For each future signal, keep the direct post/issue URL, date, persona and situation, workaround, recurrence indicators, counterexamples, and confidence. Search/result pages alone are not evidence.
 
-| Rank | Opportunity | Persona / current workaround | Repository evidence | Fit | Cost / risk | External demand |
+## Prioritized opportunity backlog
+
+Rank balances user value, evidence strength, fit to this SDK, implementation cost, and platform/security risk. Evidence confidence is about the reviewed sources, not the size of the market.
+
+| Rank | Opportunity | User and current workaround | Evidence and confidence | Project fit | Cost / risk | Decision |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Reproducible headless regression baselines | Agent authors and CI maintainers currently inspect match-series summaries or rely on broad ad-hoc thresholds. | Existing headless series and quality checks; baseline explicitly listed on roadmap. | High | Medium; stochastic runs can make baselines flaky. | Unknown |
-| 2 | Replay export and practical inspection | Agent researchers and dataset maintainers currently write custom parsers for JSONL logs. | Replay logger and summary command exist; JSON/CSV/training export is on roadmap. | High | Medium; schema/versioning and large-file behavior matter. | Unknown |
-| 3 | Native readiness and compatibility diagnostics | Integrators manually build helpers, inspect platform docs, and troubleshoot paths/permissions. | Linux uinput, Windows VHF, and macOS DriverKit setup/doctor packages exist; signing and installation remain user-managed. | High | Medium/high; privileged host changes are platform-sensitive. | Unknown |
-| 4 | Provider-neutral game-agent integration | Agent authors build game-specific observation and provider glue. | Agent Fighter has a bespoke Responses API loop; the core SDK already constrains controller actions. | Medium/high | Medium; risks broadening the SDK into perception/provider scope. | Unknown |
-| 5 | Controller ownership, reconnect, and crash recovery | Multi-agent/local testing authors write their own lifecycle coordination. | Hub, safety limits, neutral operations, and device status exist; a lease/watchdog contract is not documented. | Medium | High; process-crash and real-device semantics need careful design. | Unknown |
-| 6 | Persistent accessible remapping/calibration | Accessibility users configure mapping/calibration through external host tools. | Profiles and action maps exist; no persistent calibration/remap store is documented. | Medium | High; must validate needs and platform/game boundaries. | Unknown |
+| 1 | Native readiness and visible failure diagnosis | Game/agent developers whose host fails to create or retain an OS-visible gamepad currently piece together OS, Steam Input, and helper logs. | SDL and Steam reports show multiple host/device initialization and lifecycle cases, including [Wayland consent](https://github.com/ValveSoftware/steam-for-linux/issues/10442) and [Steam Input device recreation](https://github.com/ValveSoftware/steam-for-linux/issues/13665). **Moderate** category confidence; OpenController cannot fix upstream driver bugs. | High: native bridge and doctor already exist. | Medium; host-specific semantics and privilege boundaries require care. | Implement read-only readiness reporting now; device-specific game-consumption proof is deferred. |
+| 2 | Reproducible headless evaluation and replay | Agent authors/CI maintainers debugging a failed or regressed match currently inspect summaries or build bespoke parsers. | [FLE transient rollout failure](https://github.com/JackHopkins/factorio-learning-environment/pull/413), [setup/error report](https://github.com/JackHopkins/factorio-learning-environment/issues/417), and [high HN interest in FLE](https://news.ycombinator.com/item?id=43331582). **Moderate** workflow confidence from one benchmark ecosystem; source logs cannot restore unrecorded game state. | High: existing headless runner, event logs, and explicit roadmap items. | Medium; deterministic timing, schema stability, and large files matter. | Implement local-policy baselines and streaming JSON/CSV export. |
+| 3 | Cross-consumer controller compatibility matrix | Integrators compare whether a device/profile reaches Steam, SDL, and a native game with expected axes, rumble, and motion; today they swap modes and test each consumer manually. | SDL has several device-specific reports; Steam Deck discussions include [missing rumble](https://steamcommunity.com/app/1675200/discussions/1/580552797772062608/) and [broken controller ordering](https://steamcommunity.com/app/1675200/discussions/1/806848045381749056/). **Moderate** category confidence, but many underlying fixes belong upstream. | Medium/high: SDK profiles and native output are testable. | Medium/high; needs representative hardware/OS coverage and should not encode one game's assumptions as universal. | Next follow-up: publish a manual test matrix and add virtual-profile conformance fixtures. |
+| 4 | Reconnect, sleep/resume, and input-loss recovery | Desktop/streaming users whose virtual device is recreated or dropped currently restart the app or reconnect devices. | Recent [Steam Game Mode report](https://github.com/ValveSoftware/steam-for-linux/issues/13665) and [uinput reset report](https://github.com/ValveSoftware/steam-for-linux/issues/13029), plus [Sunshine's ViGEm transition](https://github.com/LizardByte/Sunshine/issues/3527). **Low-to-moderate** confidence: few threads and mostly upstream-specific. | Medium: bridge lifecycle/status exists. | High; must define idempotency, ownership, crash behavior, and safe neutral state. | Defer API changes; first expose lifecycle signals and validate real host semantics. |
+| 5 | Persistent accessible remapping and calibration | Players with varied motor needs currently depend on game, Steam Input, or separate host remapping tools. | One [OpenAI forum demo needed arrow-key mappings](https://community.openai.com/t/show-2d-game-built-using-codex-and-agent-skills-zero-code/1374319); the Reddit accessibility sweep was blocked. **Low** confidence; target community coverage is missing. | Medium: action maps exist. | Medium/high; needs accessibility research and persistence semantics. | Defer pending direct research with disabled gamers and accessibility-focused communities. |
+| 6 | Game perception, memory, and provider-neutral gameplay APIs | PC gamers manually share screenshots/state, while agent benchmark authors often use direct game APIs. | One [forum request for screen understanding](https://community.openai.com/t/autonomous-agent-assistant-for-pc-gamers/1402066) contrasts with the high-level API model in FLE and [MCP-first Clawfight](https://news.ycombinator.com/item?id=49658483). **Low/mixed** fit evidence. | Low/medium: adjacent to controller output, not core transport. | High; expands into vision, model orchestration, and game-specific APIs. | Keep outside the SDK core; revisit only for an optional example/integration backed by stronger demand. |
 
 ## Build goal and acceptance checklist
 
 ### Slice A — headless regression baselines
 
-- [ ] Version a baseline format with runner version, local-policy/config metadata,
-  match count, and selected aggregate metrics.
-- [ ] Compare measured results to checked-in baselines with explicit tolerances
-  and readable metric deltas.
-- [ ] Make baseline updates an explicit command; normal runs must not rewrite
-  expected results.
-- [ ] Keep stochastic external-model runs separate from deterministic/local
-  regression gates.
-- [ ] Add fixtures for passing, failing, malformed, and incompatible baselines.
-- [ ] Document baseline creation and CI usage.
+- [ ] Version baseline metadata for the deterministic local policy, simulation
+  mode/timestep, Bun/browser versions, run configuration, and active metrics.
+- [ ] Compare configuration fields individually and show expected values,
+  observed values, deltas, and explicit tolerances.
+- [ ] Make baseline updates explicit; normal runs must never rewrite expected data.
+- [ ] Keep external-model runs out of deterministic regression gates.
+- [ ] Pin meaningful nonzero action/damage activity metrics. Do not pin round or
+  winner metrics until the runner measures them consistently.
+- [ ] Cover pass, fail, malformed, incompatible metadata, and repeated identical
+  comparison runs.
+- [ ] Document baseline creation, comparison, and the metrics deliberately omitted.
 
 ### Slice B — replay export
 
-- [ ] Add streaming exports for JSON and CSV without loading the whole JSONL log.
-- [ ] Define stable columns/schema for each event kind and preserve timestamps.
-- [ ] Keep source event data available for training-oriented exports without
-  silently dropping unknown fields.
-- [ ] Reject malformed input with path and line number.
-- [ ] Add fixture coverage for mixed event types, empty files, CRLF, and bad rows.
-- [ ] Document supported formats and their compatibility contract.
+- [x] Stream JSON arrays and CSV from JSONL without retaining the whole log.
+- [x] Keep stable CSV columns, timestamps, and original event JSON so unknown
+  fields survive export.
+- [x] Report malformed input with the source path and one-based line number.
+- [x] Cover mixed events, empty and CRLF logs, quoting, malformed rows, and
+  destination aliases that could truncate the input.
+- [x] Document supported formats and the preservation contract.
 
 ### Slice C — native readiness diagnostics
 
-- [ ] Provide a stable machine-readable report for runtime, selected backend,
-  helper path/existence, permissions, capabilities, and actionable next steps.
-- [ ] Distinguish missing helper, permission failure, early process exit, and
-  protocol mismatch where the host can observe them.
-- [ ] Keep diagnostics read-only by default; do not silently install drivers,
-  change permissions, or bypass signing/trust.
-- [ ] Add platform-shaped fixtures and document what cannot be validated on the
-  current OS.
-- [ ] Treat signed installers as a separate, platform-specific follow-up that
-  requires signing assets and a security/release review.
+- [ ] Provide a versioned machine-readable report with timestamp, host/runtime,
+  backend support, helper path/status/executable state, requirements,
+  capabilities, and actionable next steps.
+- [ ] Distinguish absent from unavailable helpers and only call a helper
+  available when the path is a usable regular file.
+- [ ] Represent unsupported-host checks as unknown or not applicable, without
+  host-specific signing, elevation, or install instructions for another OS.
+- [ ] Keep diagnostics read-only; never claim to prove a driver is activated or
+  a game/Steam will consume that virtual device when it was not tested.
+- [ ] Add OS-shaped tests and document what cannot be validated on this host.
+- [ ] Treat signed installers as a separate platform-specific follow-up needing
+  signing assets and release/security review.
 
 ### Discovery and integration
 
-- [ ] Publish the environment egress draft, then retry the source sweep.
-- [ ] Replace unverified hypotheses with dated, linked source evidence and
-  confidence notes; reprioritize or remove unsupported items.
-- [x] Audit repository roadmap, existing implementations, and boundaries.
-- [x] Save targeted research domains in the environment configuration draft.
-- [ ] Review every slice independently, run its targeted tests/build/docs checks,
-  and then run the integrated release checks.
-- [ ] Create small, meaningful commits and stacked PRs; do not merge without
-  explicit authorization.
+- [x] Audit repository roadmap, existing implementations, and safety boundaries.
+- [x] Search selected public AI/gaming sources and record dated links, engagement, workarounds, confidence, and coverage gaps.
+- [x] Re-rank the backlog from observed reports, project fit, cost, and risk; defer weakly supported or upstream-owned work.
+- [ ] Revisit accessibility and Reddit-specific pain points if those communities become reachable; current feature slices do not depend on this gap.
+- [ ] Review each slice, run targeted checks, and then run integrated release checks.
+- [ ] Prepare small, meaningful stacked PRs with evidence, dependency order, acceptance criteria, and exact validation; do not merge without explicit authorization.
 
 ## Work DAG
 
 ```mermaid
 flowchart TD
-  A[Publish targeted web egress] --> B[Research public forums and issue trackers]
-  C[Audit repository roadmap and architecture] --> D[Rank opportunities and finalize acceptance]
-  B --> D
-  D --> E[Slice A: headless regression baselines]
-  D --> F[Slice B: replay export]
-  D --> G[Slice C: native readiness diagnostics]
-  E --> H[Per-slice review and checks]
+  A[Targeted public source sweep with coverage notes] --> C[Rank opportunities and finalize acceptance]
+  B[Repository roadmap and architecture audit] --> C
+  C --> E[Slice A: headless regression baselines]
+  C --> F[Slice B: replay export]
+  C --> G[Slice C: native readiness diagnostics]
+  E --> H[Per-slice review and focused checks]
   F --> H
   G --> H
-  H --> I[Integrated review and release checks]
+  H --> I[Integrated code review and release checks]
   I --> J[Prepare stacked PRs]
 ```
 
-The three implementation slices have disjoint primary ownership and can run in
-parallel after the goal/acceptance commit. Their PRs depend on that base and can
-be reviewed independently. Reprioritization after external research may change
-the DAG; do not merge any branch as part of this task.
+The targeted source-sweep node is complete for the sources listed above; Reddit and accessibility-focused community evidence remain explicit gaps. The three implementation slices have disjoint package ownership and can proceed in parallel after the goal commit. Their branches share this goal as a parent; none is to be merged during implementation.
 
 ## Branch and swarm operating rules
+
 
 - Each implementation agent owns one named branch and worktree; do not edit the
   same package or roadmap checklist from multiple worktrees.
@@ -152,5 +153,5 @@ the DAG; do not merge any branch as part of this task.
 - Commit each coherent, reviewable step; do not split commits artificially.
 - PR description records the user problem, source evidence state, acceptance
   criteria, dependency/base branch, and exact validation results.
-- The source-research DAG node remains open until egress is published and actual
-  forum sources have been reviewed.
+- Keep the Reddit and accessibility research gaps visible; refresh the source
+  sweep before making prevalence claims or starting deferred accessibility work.
