@@ -290,15 +290,20 @@ describe("profile to report conformance", () => {
     const report = decodeHidPlayStationExtendedReport(
       encodeHidPlayStationExtendedReport(state),
     );
-    expect(report.buttons).toBe(
-      (commonMask &
-        ~xInputButtonBits.BACK &
-        ~xInputButtonBits.START &
-        ~xInputButtonBits.LS &
-        ~xInputButtonBits.RS &
-        ~xInputButtonBits.DPAD_DOWN &
-        ~xInputButtonBits.DPAD_LEFT) |
-        0x0800,
+    const psSharedMask =
+      commonMask &
+      ~xInputButtonBits.BACK &
+      ~xInputButtonBits.START &
+      ~xInputButtonBits.LS &
+      ~xInputButtonBits.RS &
+      ~xInputButtonBits.DPAD_DOWN &
+      ~xInputButtonBits.DPAD_LEFT;
+    expect(report.buttons).toBe(psSharedMask | 0x0800);
+    expect(decodeHidGamepadReport(encodeHidGamepadReport(state)).buttons).toBe(
+      psSharedMask | 0x0800,
+    );
+    expect(decodeXInputReport(encodeXInputReport(state)).buttons).toBe(
+      psSharedMask,
     );
     expect([
       report.leftTrigger,
