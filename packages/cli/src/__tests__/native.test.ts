@@ -114,6 +114,28 @@ describe("native backend diagnostics", () => {
     expect(result.reports[0]?.nextSteps?.[0]).toContain("cannot access it");
   });
 
+  test("keeps legacy diagnostic ok separate from full readiness", async () => {
+    const result = await diagnoseNativeBackends({
+      selection: "linux-uinput",
+      platform: "linux",
+      diagnoseBackend: async (backend) => fakeReport(backend, true),
+      probeHelper: async () => ({
+        path: "/fake/missing-helper",
+        status: "absent",
+        executable: false,
+      }),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.helperReady).toBe(false);
+    expect(result.ready).toBe(false);
+    expect(result.reports[0]?.ready).toBe(false);
+    const output = formatNativeDoctor(result);
+    expect(output).toContain("Backend diagnostics ready: yes");
+    expect(output).toContain("Native helpers available: no");
+    expect(output).toContain("Ready: no");
+  });
+
   test("rejects a directory at the configured helper path", async () => {
     const result = await diagnoseNativeBackends({
       selection: "linux-uinput",
@@ -163,10 +185,24 @@ describe("native backend diagnostics", () => {
 
   test("formats a native doctor summary", () => {
     const output = formatNativeDoctor({
+      schemaVersion: 1,
+      generatedAt: "2026-01-02T03:04:05.000Z",
       selection: "current",
       platform: "linux",
       ok: true,
-      reports: [fakeReport("linux-uinput", true)],
+      helperReady: true,
+      ready: true,
+      reports: [
+        {
+          ...fakeReport("linux-uinput", true),
+          ready: true,
+          helper: {
+            path: "/fake/linux-helper",
+            status: "available",
+            executable: true,
+          },
+        },
+      ],
     });
 
     expect(output).toContain("OpenController Native Backend Doctor");

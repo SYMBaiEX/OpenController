@@ -164,6 +164,14 @@ opencontroller native doctor --backend current --json
 opencontroller native doctor --backend all --json
 ```
 
+At the report level, `ok` preserves the legacy backend-diagnostics aggregate
+used by `native doctor --check`; it does not include helper availability.
+`helperReady` reports whether every selected helper is present and accessible,
+and `ready` is true only when both backend diagnostics and all selected helpers
+are ready. Each backend row also includes a corresponding `ready` value. The
+human-readable output labels these checks separately so a passing platform
+probe cannot be mistaken for a launchable backend.
+
 Each backend report includes the expected helper path and whether it is
 available, absent, or inaccessible; platform and prerequisite checks; declared
 backend capabilities; requirement statuses; and actionable next steps. The

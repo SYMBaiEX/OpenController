@@ -55,6 +55,7 @@ export type NativeBackendReport = {
   recommendations: string[];
   diagnostics: unknown;
   formatted: string;
+  ready?: boolean;
   helper?: NativeHelperStatus;
   requirements?: NativeReadinessRequirement[];
   capabilities?: NativeBackendCapabilities;
@@ -90,7 +91,10 @@ export type NativeDoctorResult = {
   generatedAt: string;
   selection: NativeBackendSelection;
   platform: NodeJS.Platform;
+  /** Legacy diagnostic-only aggregate; retained for --check compatibility. */
   ok: boolean;
+  helperReady: boolean;
+  ready: boolean;
   reports: NativeBackendReport[];
 };
 
@@ -393,6 +397,7 @@ export async function diagnoseNativeBackends(
       ...report,
       helper,
       requirements,
+      ready: report.ok && helper.status === "available",
       capabilities: backendCapabilities(id),
       nextSteps: [
         ...new Set([
@@ -408,12 +413,19 @@ export async function diagnoseNativeBackends(
     });
   }
 
+  const ok = reports.length > 0 && reports.every((report) => report.ok);
+  const helperReady =
+    reports.length > 0 &&
+    reports.every((report) => report.helper?.status === "available");
+
   return {
     schemaVersion: 1,
     generatedAt: (options.now ?? (() => new Date()))().toISOString(),
     selection,
     platform,
-    ok: reports.length > 0 && reports.every((report) => report.ok),
+    ok,
+    helperReady,
+    ready: ok && helperReady,
     reports,
   };
 }
@@ -666,7 +678,9 @@ export function formatNativeDoctor(result: NativeDoctorResult): string {
     "",
     `Selection: ${result.selection}`,
     `Platform: ${result.platform}`,
-    `Ready: ${result.ok ? "yes" : "no"}`,
+    `Backend diagnostics ready: ${result.ok ? "yes" : "no"}`,
+    `Native helpers available: ${result.helperReady ? "yes" : "no"}`,
+    `Ready: ${result.ready ? "yes" : "no"}`,
   ];
 
   if (result.reports.length === 0) {
@@ -679,9 +693,14 @@ export function formatNativeDoctor(result: NativeDoctorResult): string {
       "",
       `${report.label}:`,
       `  supported on this host: ${report.supportedPlatform ? "yes" : "no"}`,
-      `  ready: ${report.ok ? "yes" : "no"}`,
+      `  backend diagnostics ready: ${report.ok ? "yes" : "no"}`,
+      `  helper available: ${report.helper?.status === "available" ? "yes" : "no"}`,
+      `  ready: ${(report.ready ?? false) ? "yes" : "no"}`,
       "",
-      indent(report.formatted, "  "),
+      indent(
+        report.formatted.replace(/^Ready:/m, "Backend diagnostics ready:"),
+        "  ",
+      ),
     );
   }
 
