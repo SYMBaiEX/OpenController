@@ -153,3 +153,58 @@ path OpenController expects before a bridge binary is present.
 | `linux-uinput` | Linux | `@opencontroller/native-linux-uinput` |
 | `windows-vhf` | Windows | `@opencontroller/native-windows-virtual-gamepad` |
 | `macos-driverkit` | macOS | `@opencontroller/native-macos-driverkit` |
+
+## Readiness Report
+
+`native doctor --json` prints a versioned JSON report (`schemaVersion: 1`) for
+automation and support bundles:
+
+```bash
+opencontroller native doctor --backend current --json
+opencontroller native doctor --backend all --json
+```
+
+At the report level, `ok` preserves the legacy backend-diagnostics aggregate
+used by `native doctor --check`; it does not include helper availability.
+`helperReady` is tri-state: `false` for a known absent/inaccessible helper,
+`true` when every helper is accessible, and `null` when a filesystem probe
+could not determine helper state. `ready` is also tri-state. It is `false` when
+a required prerequisite or helper is known to be unavailable, `true` when all
+required checks pass, and `null` when a required part of readiness is
+unverified. Each backend row also includes a corresponding `ready` value. The
+human-readable output says `unknown` for the `null` case and labels diagnostic
+checks and helper presence separately.
+
+Each backend report includes the expected helper path and whether it is
+available, absent, or inaccessible; platform and prerequisite checks; declared
+backend capabilities; requirement statuses; and actionable next steps. The
+`capabilities` object describes the SDK adapter's configured protocol support,
+not a live check that a driver or virtual device is functioning. Its
+`virtualDevice` value indicates that the adapter is configured to expose a
+virtual input device; `deviceKind` describes the implementation path (Linux
+uses a `native-helper`, while VHF and DriverKit use OS virtual gamepad drivers).
+Only a regular helper file can be available. An inaccessible existing helper
+produces a permissions step, a directory or other non-file path produces a
+path correction step, and an absent helper produces a build/install step.
+Platform-specific remediation is omitted when the selected backend does not
+run on the current host.
+
+Doctor is read-only. It checks filesystem accessibility and invokes only the
+existing platform diagnostic probes. It does not build or install helpers,
+load kernel modules, change device permissions, install drivers, elevate,
+inspect signing identity, notarize packages, or activate platform extensions.
+A `needed` or `unknown` signing, elevation, or activation status is a boundary
+of this report, not an automated verdict that the host can satisfy the
+requirement. Windows currently checks legacy ViGEmBus state but does not verify
+the VHF driver's installed or signed state, so elevation and signing are
+reported as unknown conditional requirements (they matter if the driver must
+be installed or updated). macOS checks authoring tools but not signing or
+DriverKit approval/activation. Linux checks writable uinput nodes and reports
+recommendations for module and access setup. Accordingly, Windows and macOS
+readiness remains `null` when helper files are available but these states have
+not been independently verified.
+
+Consumers should branch on `schemaVersion`, tolerate additional object fields,
+and use `nextSteps` for display rather than parsing the human-readable
+`formatted` diagnostics. Requirement fields describe matters the CLI does not
+attempt to satisfy.

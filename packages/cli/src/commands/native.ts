@@ -1,7 +1,10 @@
+import { constants } from "node:fs";
+import { access, stat } from "node:fs/promises";
 import type { ControllerProfileName } from "@opencontroller/core";
 import { createController } from "@opencontroller/core";
 import {
   createNativeHostBridgeAdapter,
+  defaultNativeHostBridgePath,
   type NativeHostBridgeAdapterOptions,
   type NativeHostBridgeBackendId,
   resolveNativeHostBridgeBackend,
@@ -52,12 +55,46 @@ export type NativeBackendReport = {
   recommendations: string[];
   diagnostics: unknown;
   formatted: string;
+  ready?: boolean | null;
+  helper?: NativeHelperStatus;
+  requirements?: NativeReadinessRequirement[];
+  capabilities?: NativeBackendCapabilities;
+  nextSteps?: string[];
+};
+
+export type NativeHelperStatus = {
+  path: string;
+  status: "available" | "absent" | "unavailable" | "not-applicable";
+  executable: boolean | null;
+  issue?: "not-regular-file" | "permission-denied" | "probe-failed";
+  fileType?: "directory" | "other";
+};
+
+export type NativeReadinessRequirement = {
+  id: "platform" | "prerequisites" | "elevation" | "signing" | "activation";
+  status: "met" | "needed" | "unknown" | "not-applicable";
+  detail: string;
+};
+
+export type NativeBackendCapabilities = {
+  virtualDevice: boolean;
+  deviceKind: "os-virtual-gamepad" | "native-helper";
+  rumble: boolean;
+  lights: boolean;
+  stateReports: boolean;
+  extensions: boolean;
+  profileHidReports: boolean;
 };
 
 export type NativeDoctorResult = {
+  schemaVersion: 1;
+  generatedAt: string;
   selection: NativeBackendSelection;
   platform: NodeJS.Platform;
+  /** Legacy diagnostic-only aggregate; retained for --check compatibility. */
   ok: boolean;
+  helperReady: boolean | null;
+  ready: boolean | null;
   reports: NativeBackendReport[];
 };
 
@@ -65,6 +102,12 @@ export type DiagnoseNativeBackendsOptions = {
   selection?: string;
   platform?: NodeJS.Platform;
   diagnoseBackend?: (backend: NativeBackendId) => Promise<NativeBackendReport>;
+  probeHelper?: (
+    backend: NativeBackendId,
+    platform: NodeJS.Platform,
+  ) => Promise<NativeHelperStatus>;
+  helperPaths?: Partial<Record<NativeBackendId, string>>;
+  now?: () => Date;
 };
 
 export type NativeTestPlan = {
@@ -333,15 +376,292 @@ export async function diagnoseNativeBackends(
   const reports: NativeBackendReport[] = [];
 
   for (const id of ids) {
-    reports.push(await diagnoseBackend(id));
+    const report = await diagnoseBackend(id);
+    const helper = await (options.probeHelper ?? probeNativeHelper)(
+      id,
+      platform,
+      options.helperPaths?.[id],
+    );
+    const requirements = readinessRequirements(report);
+    const helperNextStep =
+      helper.status === "absent"
+        ? `Build or install the ${report.label} helper at ${helper.path}, then rerun native doctor.`
+        : helper.status === "unavailable"
+          ? helper.issue === "not-regular-file"
+            ? `The ${report.label} helper path ${helper.path} is a ${helper.fileType ?? "non-file"}, not a regular file; point native doctor or the adapter at the built helper file.`
+            : helper.issue === "permission-denied"
+              ? `The ${report.label} helper at ${helper.path} exists but this process cannot access it; check its permissions and rerun native doctor.`
+              : `Could not verify the ${report.label} helper at ${helper.path}; check that path and its filesystem, then rerun native doctor.`
+          : undefined;
+    reports.push({
+      ...report,
+      helper,
+      requirements,
+      ready: backendReadiness(report, helper, requirements),
+      capabilities: backendCapabilities(id),
+      nextSteps: [
+        ...new Set([
+          ...(report.supportedPlatform && helperNextStep
+            ? [helperNextStep]
+            : []),
+          ...requirements
+            .filter((requirement) => requirement.status === "needed")
+            .map((requirement) => requirement.detail),
+          ...report.recommendations,
+        ]),
+      ],
+    });
   }
 
+  const ok = reports.length > 0 && reports.every((report) => report.ok);
+  const helperReady = aggregateReadiness(
+    reports.map((report) => helperReadiness(report.helper)),
+  );
+  const ready = aggregateReadiness(
+    reports.map((report) => report.ready ?? null),
+  );
+
   return {
+    schemaVersion: 1,
+    generatedAt: (options.now ?? (() => new Date()))().toISOString(),
     selection,
     platform,
-    ok: reports.length > 0 && reports.every((report) => report.ok),
+    ok,
+    helperReady,
+    ready,
     reports,
   };
+}
+
+function backendReadiness(
+  report: NativeBackendReport,
+  helper: NativeHelperStatus,
+  requirements: NativeReadinessRequirement[],
+): boolean | null {
+  if (!report.supportedPlatform) {
+    return false;
+  }
+  if (requirements.some((requirement) => requirement.status === "needed")) {
+    return false;
+  }
+  if (
+    helper.status === "absent" ||
+    (helper.issue !== "probe-failed" && helper.status !== "available")
+  ) {
+    return false;
+  }
+  if (requirements.some((requirement) => requirement.status === "unknown")) {
+    return null;
+  }
+  if (helper.status !== "available") {
+    return null;
+  }
+  return true;
+}
+
+function aggregateReadiness(statuses: Array<boolean | null>): boolean | null {
+  if (statuses.length === 0 || statuses.some((status) => status === false)) {
+    return false;
+  }
+  if (statuses.every((status) => status === true)) {
+    return true;
+  }
+  return null;
+}
+
+function helperReadiness(
+  helper: NativeHelperStatus | undefined,
+): boolean | null {
+  if (helper?.status === "available") {
+    return true;
+  }
+  if (helper?.status === "unavailable" && helper.issue === "probe-failed") {
+    return null;
+  }
+  return false;
+}
+
+async function probeNativeHelper(
+  backend: NativeBackendId,
+  platform: NodeJS.Platform,
+  pathOverride?: string,
+): Promise<NativeHelperStatus> {
+  const path =
+    pathOverride ?? defaultNativeHostBridgePath({ backend, platform });
+  try {
+    const fileStats = await stat(path);
+    if (!fileStats.isFile()) {
+      return {
+        path,
+        status: "unavailable",
+        executable: false,
+        issue: "not-regular-file",
+        fileType: fileStats.isDirectory() ? "directory" : "other",
+      };
+    }
+    await access(path, platform === "win32" ? constants.F_OK : constants.X_OK);
+    return {
+      path,
+      status: "available",
+      executable: platform === "win32" ? null : true,
+    };
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException)?.code;
+    if (code === "ENOENT" || code === "ENOTDIR") {
+      return { path, status: "absent", executable: false };
+    }
+    if (code === "EACCES" || code === "EPERM") {
+      return {
+        path,
+        status: "unavailable",
+        executable: false,
+        issue: "permission-denied",
+      };
+    }
+    return {
+      path,
+      status: "unavailable",
+      executable: null,
+      issue: "probe-failed",
+    };
+  }
+}
+
+function backendCapabilities(
+  backend: NativeBackendId,
+): NativeBackendCapabilities {
+  return {
+    virtualDevice: true,
+    deviceKind:
+      backend === "linux-uinput" ? "native-helper" : "os-virtual-gamepad",
+    rumble: true,
+    lights: true,
+    stateReports: true,
+    extensions: true,
+    profileHidReports: true,
+  };
+}
+
+function readinessRequirements(
+  report: NativeBackendReport,
+): NativeReadinessRequirement[] {
+  const platformStatus = report.supportedPlatform ? "met" : "needed";
+  const details = report.diagnostics as Record<string, unknown>;
+  const backend = report.backend;
+  const requirements: NativeReadinessRequirement[] = [
+    {
+      id: "platform",
+      status: platformStatus,
+      detail: report.supportedPlatform
+        ? `Backend supports ${report.hostPlatform}.`
+        : `Run this backend on ${report.hostPlatform}.`,
+    },
+  ];
+
+  if (backend === "linux-uinput") {
+    const linux = details as {
+      selectedDevicePath?: string;
+      moduleLoaded?: boolean;
+      devices?: Array<{ exists: boolean; writable: boolean }>;
+    };
+    const ready = report.ok;
+    const hasExistingDevice =
+      linux.devices?.some((device) => device.exists) ?? false;
+    const hasWritableDevice =
+      linux.devices?.some((device) => device.exists && device.writable) ??
+      false;
+    requirements.push(
+      {
+        id: "prerequisites",
+        status: !report.supportedPlatform
+          ? "unknown"
+          : ready
+            ? "met"
+            : "needed",
+        detail: ready
+          ? `Writable uinput device is available at ${linux.selectedDevicePath}.`
+          : "A loaded uinput device node with current-process write access is required.",
+      },
+      {
+        id: "elevation",
+        status: !report.supportedPlatform
+          ? "unknown"
+          : hasExistingDevice && !hasWritableDevice
+            ? "needed"
+            : ready
+              ? "not-applicable"
+              : "unknown",
+        detail:
+          "Root is not required when udev permissions grant access; privileged setup may be needed to load the module or change device permissions.",
+      },
+      {
+        id: "signing",
+        status: "not-applicable",
+        detail: "Linux uinput does not require a separately signed helper.",
+      },
+    );
+    if (linux.moduleLoaded === false && report.supportedPlatform) {
+      requirements.push({
+        id: "activation",
+        status: "needed",
+        detail:
+          "Load the uinput kernel module (for example, with modprobe) using an administrator-approved process.",
+      });
+    }
+  } else if (backend === "windows-virtual-gamepad") {
+    requirements.push(
+      {
+        id: "prerequisites",
+        status: "unknown",
+        detail:
+          "The existing doctor checks legacy ViGEmBus compatibility only; the VHF driver/device installation state is not verified.",
+      },
+      {
+        id: "elevation",
+        status: "unknown",
+        detail:
+          "Administrator elevation is required only if the virtual HID driver must be installed or updated; its installation state is not probed and native doctor never requests elevation.",
+      },
+      {
+        id: "signing",
+        status: "unknown",
+        detail:
+          "Windows requires a trusted signed driver package; the installed VHF driver and its signing state are not probed.",
+      },
+    );
+  } else {
+    requirements.push(
+      {
+        id: "prerequisites",
+        status: !report.supportedPlatform
+          ? "unknown"
+          : report.ok
+            ? "met"
+            : "needed",
+        detail:
+          "Xcode build, code-signing, and System Extension tooling is checked; activated DriverKit extension state is not verified.",
+      },
+      {
+        id: "elevation",
+        status: "unknown",
+        detail:
+          "System Extension activation may require user or administrator approval depending on macOS policy.",
+      },
+      {
+        id: "signing",
+        status: "unknown",
+        detail:
+          "DriverKit distribution requires approved entitlements, code signing, and notarization; this host's signing state is not probed.",
+      },
+      {
+        id: "activation",
+        status: "unknown",
+        detail:
+          "System Extension approval and activation are required to use the DriverKit device; activation state is not probed.",
+      },
+    );
+  }
+  return requirements;
 }
 
 export function resolveNativeBackendIds(
@@ -409,7 +729,9 @@ export function formatNativeDoctor(result: NativeDoctorResult): string {
     "",
     `Selection: ${result.selection}`,
     `Platform: ${result.platform}`,
-    `Ready: ${result.ok ? "yes" : "no"}`,
+    `Backend diagnostics ready: ${result.ok ? "yes" : "no"}`,
+    `Native helpers available: ${readinessLabel(result.helperReady)}`,
+    `Ready: ${readinessLabel(result.ready)}`,
   ];
 
   if (result.reports.length === 0) {
@@ -422,13 +744,25 @@ export function formatNativeDoctor(result: NativeDoctorResult): string {
       "",
       `${report.label}:`,
       `  supported on this host: ${report.supportedPlatform ? "yes" : "no"}`,
-      `  ready: ${report.ok ? "yes" : "no"}`,
+      `  backend diagnostics ready: ${report.ok ? "yes" : "no"}`,
+      `  helper available: ${readinessLabel(helperReadiness(report.helper))}`,
+      `  ready: ${readinessLabel(report.ready)}`,
       "",
-      indent(report.formatted, "  "),
+      indent(
+        report.formatted.replace(/^Ready:/m, "Backend diagnostics ready:"),
+        "  ",
+      ),
     );
   }
 
   return lines.join("\n");
+}
+
+function readinessLabel(status: boolean | null | undefined): string {
+  if (status === true) {
+    return "yes";
+  }
+  return status === false ? "no" : "unknown";
 }
 
 async function diagnoseNativeBackend(

@@ -50,24 +50,266 @@ describe("native backend diagnostics", () => {
     const result = await diagnoseNativeBackends({
       selection: "all",
       platform: "darwin",
+      now: () => new Date("2026-01-02T03:04:05.000Z"),
+      probeHelper: async (backend) => ({
+        path: `/fake/${backend}`,
+        status: backend === "linux-uinput" ? "absent" : "available",
+        executable: backend !== "linux-uinput",
+      }),
       diagnoseBackend: async (backend) =>
         fakeReport(backend, backend !== "windows-virtual-gamepad"),
     });
 
+    expect(result.schemaVersion).toBe(1);
+    expect(result.generatedAt).toBe("2026-01-02T03:04:05.000Z");
     expect(result.ok).toBe(false);
     expect(result.reports.map((report) => report.backend)).toEqual([
       "linux-uinput",
       "windows-virtual-gamepad",
       "macos-driverkit",
     ]);
+    expect(result.reports[0]).toMatchObject({
+      helper: {
+        status: "absent",
+        path: "/fake/linux-uinput",
+        executable: false,
+      },
+      capabilities: {
+        virtualDevice: true,
+        deviceKind: "native-helper",
+        rumble: true,
+        lights: true,
+        profileHidReports: true,
+      },
+    });
+    expect(result.reports[1]?.requirements).toContainEqual(
+      expect.objectContaining({
+        id: "prerequisites",
+        status: "unknown",
+      }),
+    );
+    expect(result.reports[2]?.requirements?.map(({ id }) => id)).toContain(
+      "signing",
+    );
+    expect(result.reports[1]?.capabilities?.deviceKind).toBe(
+      "os-virtual-gamepad",
+    );
+    expect(result.reports[0]?.nextSteps?.[0]).toContain("Build or install");
+  });
+
+  test("classifies inaccessible helpers distinctly from missing helpers", async () => {
+    const result = await diagnoseNativeBackends({
+      selection: "linux-uinput",
+      platform: "linux",
+      diagnoseBackend: async (backend) => fakeReport(backend, false),
+      probeHelper: async () => ({
+        path: "/fake/denied-helper",
+        status: "unavailable",
+        executable: false,
+        issue: "permission-denied",
+      }),
+    });
+
+    expect(result.reports[0]?.helper?.status).toBe("unavailable");
+    expect(result.reports[0]?.nextSteps?.[0]).toContain("cannot access it");
+  });
+
+  test("keeps legacy diagnostic ok separate from full readiness", async () => {
+    const result = await diagnoseNativeBackends({
+      selection: "linux-uinput",
+      platform: "linux",
+      diagnoseBackend: async (backend) => ({
+        ...fakeReport(backend, true),
+        diagnostics: {
+          platform: "linux",
+          supportedPlatform: true,
+          ok: true,
+          selectedDevicePath: "/dev/uinput",
+          moduleLoaded: true,
+          devices: [{ path: "/dev/uinput", exists: true, writable: true }],
+        },
+      }),
+      probeHelper: async () => ({
+        path: "/fake/missing-helper",
+        status: "absent",
+        executable: false,
+      }),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.helperReady).toBe(false);
+    expect(result.ready).toBe(false);
+    expect(result.reports[0]?.ready).toBe(false);
+    const output = formatNativeDoctor(result);
+    expect(output).toContain("Backend diagnostics ready: yes");
+    expect(output).toContain("Native helpers available: no");
+    expect(output).toContain("Ready: no");
+  });
+
+  test("reports readiness as unknown while Windows driver state is unverified", async () => {
+    const result = await diagnoseNativeBackends({
+      selection: "windows-virtual-gamepad",
+      platform: "win32",
+      diagnoseBackend: async (backend) => fakeReport(backend, true),
+      probeHelper: async () => ({
+        path: "C:\\fake\\host-bridge.exe",
+        status: "available",
+        executable: null,
+      }),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.reports[0]?.requirements).toContainEqual(
+      expect.objectContaining({ id: "elevation", status: "unknown" }),
+    );
+    expect(result.reports[0]?.requirements).toContainEqual(
+      expect.objectContaining({ id: "signing", status: "unknown" }),
+    );
+    expect(result.reports[0]?.ready).toBeNull();
+    expect(result.ready).toBeNull();
+    expect(formatNativeDoctor(result)).toContain("Ready: unknown");
+  });
+
+  test("keeps helper readiness unknown when a filesystem probe fails", async () => {
+    const result = await diagnoseNativeBackends({
+      selection: "linux-uinput",
+      platform: "linux",
+      diagnoseBackend: async (backend) => fakeReport(backend, true),
+      probeHelper: async () => ({
+        path: "/fake/linux-helper",
+        status: "unavailable",
+        executable: null,
+        issue: "probe-failed",
+      }),
+    });
+
+    expect(result.helperReady).toBeNull();
+    expect(result.reports[0]?.ready).toBeNull();
+    expect(result.ready).toBeNull();
+    const output = formatNativeDoctor(result);
+    expect(output).toContain("Native helpers available: unknown");
+    expect(output).toContain("helper available: unknown");
+    expect(output).toContain("Ready: unknown");
+  });
+
+  test("reports known Linux prerequisite failures as not ready", async () => {
+    const result = await diagnoseNativeBackends({
+      selection: "linux-uinput",
+      platform: "linux",
+      diagnoseBackend: async (backend) => ({
+        ...fakeReport(backend, false),
+        diagnostics: {
+          platform: "linux",
+          supportedPlatform: true,
+          ok: false,
+          moduleLoaded: true,
+          devices: [{ path: "/dev/uinput", exists: true, writable: false }],
+        },
+      }),
+      probeHelper: async () => ({
+        path: "/fake/linux-helper",
+        status: "available",
+        executable: true,
+      }),
+    });
+
+    expect(result.reports[0]?.ready).toBe(false);
+    expect(result.ready).toBe(false);
+  });
+
+  test("reports ready when Linux prerequisites and helper are verified", async () => {
+    const result = await diagnoseNativeBackends({
+      selection: "linux-uinput",
+      platform: "linux",
+      diagnoseBackend: async (backend) => ({
+        ...fakeReport(backend, true),
+        diagnostics: {
+          platform: "linux",
+          supportedPlatform: true,
+          ok: true,
+          selectedDevicePath: "/dev/uinput",
+          moduleLoaded: true,
+          devices: [{ path: "/dev/uinput", exists: true, writable: true }],
+        },
+      }),
+      probeHelper: async () => ({
+        path: "/fake/linux-helper",
+        status: "available",
+        executable: true,
+      }),
+    });
+
+    expect(result.reports[0]?.ready).toBe(true);
+    expect(result.ready).toBe(true);
+  });
+
+  test("rejects a directory at the configured helper path", async () => {
+    const result = await diagnoseNativeBackends({
+      selection: "linux-uinput",
+      platform: "linux",
+      helperPaths: { "linux-uinput": process.cwd() },
+      diagnoseBackend: async (backend) => fakeReport(backend, false),
+    });
+
+    expect(result.reports[0]?.helper).toMatchObject({
+      status: "unavailable",
+      issue: "not-regular-file",
+      fileType: "directory",
+    });
+    expect(result.reports[0]?.nextSteps?.[0]).toContain("not a regular file");
+  });
+
+  test("does not recommend off-platform privileged steps", async () => {
+    const result = await diagnoseNativeBackends({
+      selection: "all",
+      platform: "linux",
+      diagnoseBackend: async (backend) => ({
+        ...fakeReport(backend, false),
+        supportedPlatform: backend === "linux-uinput",
+      }),
+      probeHelper: async (backend) => ({
+        path: `/fake/${backend}`,
+        status: "absent",
+        executable: false,
+      }),
+    });
+
+    for (const report of result.reports.filter(
+      ({ backend }) => backend !== "linux-uinput",
+    )) {
+      expect(
+        report.requirements?.some(
+          (requirement) =>
+            ["elevation", "signing", "activation"].includes(requirement.id) &&
+            requirement.status === "needed",
+        ),
+      ).toBe(false);
+      expect(
+        report.nextSteps?.some((step) => step.startsWith("Build or install")),
+      ).toBe(false);
+    }
   });
 
   test("formats a native doctor summary", () => {
     const output = formatNativeDoctor({
+      schemaVersion: 1,
+      generatedAt: "2026-01-02T03:04:05.000Z",
       selection: "current",
       platform: "linux",
       ok: true,
-      reports: [fakeReport("linux-uinput", true)],
+      helperReady: true,
+      ready: true,
+      reports: [
+        {
+          ...fakeReport("linux-uinput", true),
+          ready: true,
+          helper: {
+            path: "/fake/linux-helper",
+            status: "available",
+            executable: true,
+          },
+        },
+      ],
     });
 
     expect(output).toContain("OpenController Native Backend Doctor");
