@@ -37,27 +37,14 @@ The patch is partial: controls not listed keep their current state. The runtime
 still performs profile normalization, safety checks, replay logging, and one
 adapter state-sync message.
 
-For safer model-facing control, prefer action maps:
+For safer model-facing control, use named action maps. Run the canonical
+hold-and-release example from the repository root:
 
-```ts
-const actions = createActionMap(controller, {
-  interact: [{ type: "press", button: "A", durationMs: 100 }],
-  holdBlock: [{ type: "setButton", button: "LB", pressed: true }],
-  combatTick: [
-    {
-      type: "setState",
-      state: {
-        buttons: { LB: true },
-        triggers: { RT: 0.25 },
-        sticks: { LEFT: { x: 0.5, y: 0 } }
-      }
-    }
-  ],
-  releaseBlock: [{ type: "setButton", button: "LB", pressed: false }],
-  stop: [{ type: "neutral" }]
-});
-
-await actions.run("interact");
+```bash
+bun run examples/basic-dry-run/ai-agent-integration.ts
 ```
 
+The [runnable source](../examples/basic-dry-run/ai-agent-integration.ts) holds
+and releases a button through named actions. CI executes that same source and
+checks both states and replay intents with `bun run check:dry-run-examples`.
 Action maps keep model output constrained to named, reviewed behaviors.

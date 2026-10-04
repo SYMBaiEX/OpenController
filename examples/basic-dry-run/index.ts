@@ -1,26 +1,36 @@
+import { randomUUID } from "node:crypto";
 import {
   createActionMap,
   createController,
   xboxActionPreset,
 } from "@opencontroller/core";
 
-const controller = await createController({
-  profile: "xbox",
-  adapter: "dry-run",
-  replay: {
-    source: "basic-dry-run-example",
-  },
-});
+export async function runBasicDryRunExample(
+  replayDir = `replays/basic-dry-run-example-${randomUUID()}`,
+) {
+  const controller = await createController({
+    profile: "xbox",
+    adapter: "dry-run",
+    replay: {
+      dir: replayDir,
+      source: "basic-dry-run-example",
+    },
+  });
 
-const actions = createActionMap(controller, xboxActionPreset);
+  const actions = createActionMap(controller, xboxActionPreset);
 
-await controller.press("A", 100, { intent: "interact" });
-await controller.moveStick("LEFT", { x: 0, y: -1 }, 250, {
-  intent: "move_forward",
-});
-await actions.run("dodge");
-await controller.neutral();
+  await controller.press("A", 100, { intent: "interact" });
+  await controller.moveStick("LEFT", { x: 0, y: -1 }, 250, {
+    intent: "move_forward",
+  });
+  await actions.run("dodge");
+  const state = controller.getState();
+  await controller.neutral();
 
-console.log(controller.getState());
+  await controller.disconnect();
+  return state;
+}
 
-await controller.disconnect();
+if (import.meta.main) {
+  console.log(await runBasicDryRunExample());
+}

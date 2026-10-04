@@ -25,6 +25,9 @@
     },
     {
       "path": "./examples/agent-fighter"
+    },
+    {
+      "path": "./examples/basic-dry-run"
     }
   ]
 }
