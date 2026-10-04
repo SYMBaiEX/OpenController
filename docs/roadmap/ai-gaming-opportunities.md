@@ -1,6 +1,6 @@
 # OpenController AI and Gaming Opportunity Goal
 
-**Status:** targeted source sweep complete with documented coverage gaps. Replay export and native readiness are implemented on separate branches; independent review findings were fixed, and the integrated release checks pass. Metric baselines are deferred after the runner failed to produce reliable metrics. Stacked PRs are prepared in dependency order; none have been merged.
+**Status:** Cycle 1 is merged to `main` as PRs #1–#4. The post-merge release check passes. Metric baselines remain deferred because the runner did not produce reliable outcomes, and the Reddit/accessibility evidence gaps remain open. Cycle 2 is tracked in [issue #5](https://github.com/SYMBaiEX/OpenController/issues/5), starting with refreshed research on controller compatibility.
 
 ## Product goal
 
@@ -132,7 +132,7 @@ Future acceptance criteria:
 - [x] Run focused tests/build/format checks for replay export and native readiness on their owned branches.
 - [x] Independently review both slices, resolve findings, and review the fixes.
 - [x] Run integrated release checks on the combined feature branches.
-- [x] Prepare meaningful stacked PRs with evidence, dependency order, acceptance criteria, and exact validation; do not merge without explicit authorization.
+- [x] Prepare and merge meaningful stacked PRs in dependency order with evidence, acceptance criteria, and exact validation.
 
 ### Integrated review and validation
 
@@ -143,8 +143,8 @@ formulas. The feature branches were corrected, and the reviewer confirmed all
 three findings resolved with no new blockers. A separate review of the Bun,
 TypeScript, and package upgrade found no correctness, security, or CI blockers.
 
-At the combined feature tip, `bun install --frozen-lockfile` and
-`bun run release:check` passed:
+After PRs #1–#4 merged, `bun install --frozen-lockfile` and
+`bun run release:check` passed on `main`:
 
 - Biome checked 139 files with no fixes needed; `tsc -b` passed.
 - 151 tests passed, with 0 failures and 1,000 assertions.
@@ -174,22 +174,29 @@ flowchart TD
 
 The targeted source-sweep node is complete for the sources listed above; Reddit
 and accessibility-focused community evidence remain explicit gaps. Replay
-export and native readiness can proceed to integration. Baseline capture remains
-a future node because unstable metrics would create false confidence.
+export and native readiness are merged. Baseline capture remains a future node
+because unstable metrics would create false confidence.
 
 ## Branch and PR dependency order
 
-Current local stack:
+Cycle 1's stack was merged to `main` on 2026-10-04:
 
-- work — toolchain/package upgrade, based on main.
-- research/ai-gaming-goal-dag — research, ranked goal, and checklist, based on work.
-- feat/replay-export-workflow — replay exporter, based on the research/DAG branch.
-- feat/native-readiness-report — native doctor report, based on the research/DAG branch.
+- [#1](https://github.com/SYMBaiEX/OpenController/pull/1) toolchain/package upgrade — merged first.
+- [#2](https://github.com/SYMBaiEX/OpenController/pull/2) research, ranked goal, and checklist — merged after #1.
+- [#3](https://github.com/SYMBaiEX/OpenController/pull/3) replay exporter — rebased on the research branch and merged after #2.
+- [#4](https://github.com/SYMBaiEX/OpenController/pull/4) native doctor report — rebased onto the updated `main` after #3 and merged last.
 
-The two feature branches are siblings and do not depend on one another. The
-attempted feat/fighter-regression-baselines branch was reset to the DAG parent
-and excluded because its measurements were not a trustworthy regression signal.
-Prepare one PR for each meaningful branch in this order; do not merge.
+The attempted `feat/fighter-regression-baselines` branch was reset to the DAG
+parent and excluded because its measurements were not a trustworthy regression
+signal. It remains a deferred backlog item.
+
+## Next cycle
+
+[Issue #5](https://github.com/SYMBaiEX/OpenController/issues/5) begins Cycle 2.
+It uses a one-cycle DAG for refresh research, evidence ranking, bounded scope,
+implementation, independent review, stacked PRs, ordered merges, and opening the
+next cycle issue. Its first hypothesis is controller compatibility/conformance;
+the issue requires refreshed evidence before implementation is selected.
 
 ## Branch and swarm operating rules
 
