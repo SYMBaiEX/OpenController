@@ -5,9 +5,11 @@ import {
   formatNativeDoctor,
   type NativeBackendId,
   type NativeBackendReport,
+  type NativeTestRunnerController,
   normalizeNativeBackendSelection,
   prepareNativeSetup,
   resolveNativeBackendIds,
+  runNativeTest,
 } from "../commands/native";
 
 describe("native backend selection", () => {
@@ -41,6 +43,85 @@ describe("native backend selection", () => {
       "linux-uinput",
       "windows-virtual-gamepad",
       "macos-driverkit",
+    ]);
+  });
+});
+
+describe("native backend test runner", () => {
+  const plan = createNativeTestPlan({ backend: "linux-uinput" });
+
+  test("disconnects after press, move, trigger, or neutral fails", async () => {
+    for (const failedAction of [
+      "press",
+      "moveStick",
+      "trigger",
+      "neutral",
+    ] as const) {
+      const fixture = createNativeTestRunnerFixture({ failedAction });
+
+      await expect(runNativeTest(fixture.controller, plan)).rejects.toBe(
+        fixture.actionError,
+      );
+      expect(fixture.calls.at(-1)).toBe("disconnect");
+    }
+  });
+
+  test("surfaces disconnect failure after successful actions", async () => {
+    const fixture = createNativeTestRunnerFixture({ failDisconnect: true });
+
+    await expect(runNativeTest(fixture.controller, plan)).rejects.toBe(
+      fixture.disconnectError,
+    );
+    expect(fixture.calls).toEqual([
+      "press",
+      "moveStick",
+      "trigger",
+      "neutral",
+      "getState",
+      "disconnect",
+    ]);
+  });
+
+  test("preserves action and disconnect failures together", async () => {
+    const fixture = createNativeTestRunnerFixture({
+      failedAction: "press",
+      failDisconnect: true,
+    });
+    let caught: unknown;
+
+    try {
+      await runNativeTest(fixture.controller, plan);
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toBeInstanceOf(AggregateError);
+    if (caught instanceof AggregateError) {
+      expect(caught.message).toBe(
+        "Primary native test failure: native test action failed\nController disconnect/cleanup failure: native test disconnect failed",
+      );
+      expect(caught.errors).toEqual([
+        fixture.actionError,
+        fixture.disconnectError,
+      ]);
+      expect(caught.cause).toBe(fixture.actionError);
+    }
+    expect(fixture.calls).toEqual(["press", "disconnect"]);
+  });
+
+  test("neutralizes and disconnects before returning success", async () => {
+    const fixture = createNativeTestRunnerFixture();
+
+    await expect(runNativeTest(fixture.controller, plan)).resolves.toEqual({
+      captured: true,
+    });
+    expect(fixture.calls).toEqual([
+      "press",
+      "moveStick",
+      "trigger",
+      "neutral",
+      "getState",
+      "disconnect",
     ]);
   });
 });
@@ -564,6 +645,43 @@ describe("native backend setup plan", () => {
     );
   });
 });
+
+function createNativeTestRunnerFixture(
+  options: {
+    failedAction?: "press" | "moveStick" | "trigger" | "neutral";
+    failDisconnect?: boolean;
+  } = {},
+) {
+  const calls: string[] = [];
+  const actionError = new Error("native test action failed");
+  const disconnectError = new Error("native test disconnect failed");
+  const runAction =
+    (action: NonNullable<typeof options.failedAction>) =>
+    async (): Promise<void> => {
+      calls.push(action);
+      if (options.failedAction === action) {
+        throw actionError;
+      }
+    };
+  const controller: NativeTestRunnerController<{ captured: boolean }> = {
+    press: runAction("press"),
+    moveStick: runAction("moveStick"),
+    trigger: runAction("trigger"),
+    neutral: runAction("neutral"),
+    getState() {
+      calls.push("getState");
+      return { captured: true };
+    },
+    async disconnect() {
+      calls.push("disconnect");
+      if (options.failDisconnect) {
+        throw disconnectError;
+      }
+    },
+  };
+
+  return { actionError, calls, controller, disconnectError };
+}
 
 function fakeReport(
   backend: NativeBackendId,
