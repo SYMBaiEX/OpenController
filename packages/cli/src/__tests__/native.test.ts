@@ -50,16 +50,62 @@ describe("native backend diagnostics", () => {
     const result = await diagnoseNativeBackends({
       selection: "all",
       platform: "darwin",
+      now: () => new Date("2026-01-02T03:04:05.000Z"),
+      probeHelper: async (backend) => ({
+        path: `/fake/${backend}`,
+        status: backend === "linux-uinput" ? "absent" : "available",
+        executable: backend !== "linux-uinput",
+      }),
       diagnoseBackend: async (backend) =>
         fakeReport(backend, backend !== "windows-virtual-gamepad"),
     });
 
+    expect(result.schemaVersion).toBe(1);
+    expect(result.generatedAt).toBe("2026-01-02T03:04:05.000Z");
     expect(result.ok).toBe(false);
     expect(result.reports.map((report) => report.backend)).toEqual([
       "linux-uinput",
       "windows-virtual-gamepad",
       "macos-driverkit",
     ]);
+    expect(result.reports[0]).toMatchObject({
+      helper: {
+        status: "absent",
+        path: "/fake/linux-uinput",
+        executable: false,
+      },
+      capabilities: {
+        virtualDevice: true,
+        rumble: true,
+        lights: true,
+        profileHidReports: true,
+      },
+    });
+    expect(result.reports[1]?.requirements).toContainEqual(
+      expect.objectContaining({
+        id: "prerequisites",
+        status: "unknown",
+      }),
+    );
+    expect(result.reports[2]?.requirements?.map(({ id }) => id)).toContain(
+      "signing",
+    );
+  });
+
+  test("classifies inaccessible helpers distinctly from missing helpers", async () => {
+    const result = await diagnoseNativeBackends({
+      selection: "linux-uinput",
+      platform: "linux",
+      diagnoseBackend: async (backend) => fakeReport(backend, false),
+      probeHelper: async () => ({
+        path: "/fake/denied-helper",
+        status: "unavailable",
+        executable: false,
+      }),
+    });
+
+    expect(result.reports[0]?.helper?.status).toBe("unavailable");
+    expect(result.reports[0]?.nextSteps?.[0]).toContain("Build or install");
   });
 
   test("formats a native doctor summary", () => {

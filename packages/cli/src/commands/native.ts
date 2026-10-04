@@ -1,7 +1,10 @@
+import { constants } from "node:fs";
+import { access } from "node:fs/promises";
 import type { ControllerProfileName } from "@opencontroller/core";
 import { createController } from "@opencontroller/core";
 import {
   createNativeHostBridgeAdapter,
+  defaultNativeHostBridgePath,
   type NativeHostBridgeAdapterOptions,
   type NativeHostBridgeBackendId,
   resolveNativeHostBridgeBackend,
@@ -52,9 +55,37 @@ export type NativeBackendReport = {
   recommendations: string[];
   diagnostics: unknown;
   formatted: string;
+  helper?: NativeHelperStatus;
+  requirements?: NativeReadinessRequirement[];
+  capabilities?: NativeBackendCapabilities;
+  nextSteps?: string[];
+};
+
+export type NativeHelperStatus = {
+  path: string;
+  status: "available" | "absent" | "unavailable" | "not-applicable";
+  executable: boolean | null;
+};
+
+export type NativeReadinessRequirement = {
+  id: "platform" | "prerequisites" | "elevation" | "signing" | "activation";
+  status: "met" | "needed" | "unknown" | "not-applicable";
+  detail: string;
+};
+
+export type NativeBackendCapabilities = {
+  virtualDevice: boolean;
+  deviceKind: "os-virtual-gamepad" | "native-helper";
+  rumble: boolean;
+  lights: boolean;
+  stateReports: boolean;
+  extensions: boolean;
+  profileHidReports: boolean;
 };
 
 export type NativeDoctorResult = {
+  schemaVersion: 1;
+  generatedAt: string;
   selection: NativeBackendSelection;
   platform: NodeJS.Platform;
   ok: boolean;
@@ -65,6 +96,11 @@ export type DiagnoseNativeBackendsOptions = {
   selection?: string;
   platform?: NodeJS.Platform;
   diagnoseBackend?: (backend: NativeBackendId) => Promise<NativeBackendReport>;
+  probeHelper?: (
+    backend: NativeBackendId,
+    platform: NodeJS.Platform,
+  ) => Promise<NativeHelperStatus>;
+  now?: () => Date;
 };
 
 export type NativeTestPlan = {
@@ -333,15 +369,200 @@ export async function diagnoseNativeBackends(
   const reports: NativeBackendReport[] = [];
 
   for (const id of ids) {
-    reports.push(await diagnoseBackend(id));
+    const report = await diagnoseBackend(id);
+    const helper = await (options.probeHelper ?? probeNativeHelper)(
+      id,
+      platform,
+    );
+    const requirements = readinessRequirements(report);
+    reports.push({
+      ...report,
+      helper,
+      requirements,
+      capabilities: backendCapabilities(),
+      nextSteps: [
+        ...new Set([
+          ...(helper.status !== "available" &&
+          helper.status !== "not-applicable"
+            ? [
+                `Build or install the ${report.label} helper at ${helper.path}, then rerun native doctor.`,
+              ]
+            : []),
+          ...requirements
+            .filter((requirement) => requirement.status === "needed")
+            .map((requirement) => requirement.detail),
+          ...report.recommendations,
+        ]),
+      ],
+    });
   }
 
   return {
+    schemaVersion: 1,
+    generatedAt: (options.now ?? (() => new Date()))().toISOString(),
     selection,
     platform,
     ok: reports.length > 0 && reports.every((report) => report.ok),
     reports,
   };
+}
+
+async function probeNativeHelper(
+  backend: NativeBackendId,
+  platform: NodeJS.Platform,
+): Promise<NativeHelperStatus> {
+  const path = defaultNativeHostBridgePath({ backend, platform });
+  try {
+    await access(path, platform === "win32" ? constants.F_OK : constants.X_OK);
+    return {
+      path,
+      status: "available",
+      executable: platform === "win32" ? null : true,
+    };
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException)?.code;
+    if (code === "ENOENT" || code === "ENOTDIR") {
+      return { path, status: "absent", executable: false };
+    }
+    if (code === "EACCES" || code === "EPERM") {
+      return { path, status: "unavailable", executable: false };
+    }
+    return { path, status: "unavailable", executable: null };
+  }
+}
+
+function backendCapabilities(): NativeBackendCapabilities {
+  return {
+    virtualDevice: true,
+    deviceKind: "os-virtual-gamepad",
+    rumble: true,
+    lights: true,
+    stateReports: true,
+    extensions: true,
+    profileHidReports: true,
+  };
+}
+
+function readinessRequirements(
+  report: NativeBackendReport,
+): NativeReadinessRequirement[] {
+  const platformStatus = report.supportedPlatform ? "met" : "needed";
+  const details = report.diagnostics as Record<string, unknown>;
+  const backend = report.backend;
+  const requirements: NativeReadinessRequirement[] = [
+    {
+      id: "platform",
+      status: platformStatus,
+      detail: report.supportedPlatform
+        ? `Backend supports ${report.hostPlatform}.`
+        : `Run this backend on ${report.hostPlatform}.`,
+    },
+  ];
+
+  if (backend === "linux-uinput") {
+    const linux = details as {
+      selectedDevicePath?: string;
+      moduleLoaded?: boolean;
+      devices?: Array<{ exists: boolean; writable: boolean }>;
+    };
+    const ready = report.ok;
+    const hasExistingDevice =
+      linux.devices?.some((device) => device.exists) ?? false;
+    const hasWritableDevice =
+      linux.devices?.some((device) => device.exists && device.writable) ??
+      false;
+    requirements.push(
+      {
+        id: "prerequisites",
+        status: !report.supportedPlatform
+          ? "unknown"
+          : ready
+            ? "met"
+            : "needed",
+        detail: ready
+          ? `Writable uinput device is available at ${linux.selectedDevicePath}.`
+          : "A loaded uinput device node with current-process write access is required.",
+      },
+      {
+        id: "elevation",
+        status: !report.supportedPlatform
+          ? "unknown"
+          : hasExistingDevice && !hasWritableDevice
+            ? "needed"
+            : ready
+              ? "not-applicable"
+              : "unknown",
+        detail:
+          "Root is not required when udev permissions grant access; privileged setup may be needed to load the module or change device permissions.",
+      },
+      {
+        id: "signing",
+        status: "not-applicable",
+        detail: "Linux uinput does not require a separately signed helper.",
+      },
+    );
+    if (linux.moduleLoaded === false && report.supportedPlatform) {
+      requirements.push({
+        id: "activation",
+        status: "needed",
+        detail:
+          "Load the uinput kernel module (for example, with modprobe) using an administrator-approved process.",
+      });
+    }
+  } else if (backend === "windows-virtual-gamepad") {
+    requirements.push(
+      {
+        id: "prerequisites",
+        status: "unknown",
+        detail:
+          "The existing doctor checks legacy ViGEmBus compatibility only; the VHF driver/device installation state is not verified.",
+      },
+      {
+        id: "elevation",
+        status: "needed",
+        detail:
+          "Administrator elevation is required to install or update the virtual HID driver; native doctor never requests elevation.",
+      },
+      {
+        id: "signing",
+        status: "needed",
+        detail:
+          "Review and sign the Windows driver package with a trusted certificate before installation.",
+      },
+    );
+  } else {
+    requirements.push(
+      {
+        id: "prerequisites",
+        status: !report.supportedPlatform
+          ? "unknown"
+          : report.ok
+            ? "met"
+            : "needed",
+        detail:
+          "Xcode build, code-signing, and System Extension tooling is checked; activated DriverKit extension state is not verified.",
+      },
+      {
+        id: "elevation",
+        status: "unknown",
+        detail:
+          "System Extension activation may require user or administrator approval depending on macOS policy.",
+      },
+      {
+        id: "signing",
+        status: "needed",
+        detail:
+          "Apple-approved DriverKit entitlements, code signing, and notarization are required for distribution.",
+      },
+      {
+        id: "activation",
+        status: "needed",
+        detail:
+          "The user must approve and activate the DriverKit System Extension; native doctor does not inspect activation state.",
+      },
+    );
+  }
+  return requirements;
 }
 
 export function resolveNativeBackendIds(
