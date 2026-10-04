@@ -304,7 +304,7 @@ Reddit, Google search, and SDL Discourse search returned HTTP 403. Steam Communi
 
 #### Repository audit and ranking
 
-The audit confirmed a direct documentation/API mismatch: `packages/core/README.md` calls `hub.createController`, while the exported `ControllerHub` implements `add`, `get`, `has`, `list`, `states`, and `disconnectAll`. The README's two-controller example therefore does not match the public class. Existing tests verify two dry-run controllers and independent state, but omit duplicate logical-ID rejection and reusing an ID after `disconnectAll`. The SDK assigns logical IDs supplied by callers; it does not discover physical devices or own browser/OS slot identity.
+The audit confirmed a direct documentation/API mismatch: `packages/core/README.md` calls `hub.createController`, while the exported `ControllerHub` implements `add`, `get`, `has`, `list`, `states`, and `disconnectAll`. The README's two-controller example therefore does not match the public class. Existing tests cover two dry-run controllers with distinct IDs and profile entries, but omit assertions for independent state, duplicate logical-ID rejection, and reusing an ID after `disconnectAll`. The SDK assigns logical IDs supplied by callers; it does not discover physical devices or own browser/OS slot identity.
 
 | Decision | Candidate | Fit and evidence | Cost and risk |
 | --- | --- | --- | --- |
