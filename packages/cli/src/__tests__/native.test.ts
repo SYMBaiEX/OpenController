@@ -106,13 +106,28 @@ describe("native backend diagnostics", () => {
         path: "/fake/denied-helper",
         status: "unavailable",
         executable: false,
+        issue: "permission-denied",
       }),
     });
 
     expect(result.reports[0]?.helper?.status).toBe("unavailable");
-    expect(result.reports[0]?.nextSteps?.[0]).toContain(
-      "exists but is not accessible",
-    );
+    expect(result.reports[0]?.nextSteps?.[0]).toContain("cannot access it");
+  });
+
+  test("rejects a directory at the configured helper path", async () => {
+    const result = await diagnoseNativeBackends({
+      selection: "linux-uinput",
+      platform: "linux",
+      helperPaths: { "linux-uinput": process.cwd() },
+      diagnoseBackend: async (backend) => fakeReport(backend, false),
+    });
+
+    expect(result.reports[0]?.helper).toMatchObject({
+      status: "unavailable",
+      issue: "not-regular-file",
+      fileType: "directory",
+    });
+    expect(result.reports[0]?.nextSteps?.[0]).toContain("not a regular file");
   });
 
   test("does not recommend off-platform privileged steps", async () => {

@@ -1,5 +1,5 @@
 import { constants } from "node:fs";
-import { access } from "node:fs/promises";
+import { access, stat } from "node:fs/promises";
 import type { ControllerProfileName } from "@opencontroller/core";
 import { createController } from "@opencontroller/core";
 import {
@@ -65,6 +65,8 @@ export type NativeHelperStatus = {
   path: string;
   status: "available" | "absent" | "unavailable" | "not-applicable";
   executable: boolean | null;
+  issue?: "not-regular-file" | "permission-denied" | "probe-failed";
+  fileType?: "directory" | "other";
 };
 
 export type NativeReadinessRequirement = {
@@ -100,6 +102,7 @@ export type DiagnoseNativeBackendsOptions = {
     backend: NativeBackendId,
     platform: NodeJS.Platform,
   ) => Promise<NativeHelperStatus>;
+  helperPaths?: Partial<Record<NativeBackendId, string>>;
   now?: () => Date;
 };
 
@@ -373,13 +376,18 @@ export async function diagnoseNativeBackends(
     const helper = await (options.probeHelper ?? probeNativeHelper)(
       id,
       platform,
+      options.helperPaths?.[id],
     );
     const requirements = readinessRequirements(report);
     const helperNextStep =
       helper.status === "absent"
         ? `Build or install the ${report.label} helper at ${helper.path}, then rerun native doctor.`
         : helper.status === "unavailable"
-          ? `The ${report.label} helper at ${helper.path} exists but is not accessible; check its permissions and rerun native doctor.`
+          ? helper.issue === "not-regular-file"
+            ? `The ${report.label} helper path ${helper.path} is a ${helper.fileType ?? "non-file"}, not a regular file; point native doctor or the adapter at the built helper file.`
+            : helper.issue === "permission-denied"
+              ? `The ${report.label} helper at ${helper.path} exists but this process cannot access it; check its permissions and rerun native doctor.`
+              : `Could not verify the ${report.label} helper at ${helper.path}; check that path and its filesystem, then rerun native doctor.`
           : undefined;
     reports.push({
       ...report,
@@ -413,9 +421,21 @@ export async function diagnoseNativeBackends(
 async function probeNativeHelper(
   backend: NativeBackendId,
   platform: NodeJS.Platform,
+  pathOverride?: string,
 ): Promise<NativeHelperStatus> {
-  const path = defaultNativeHostBridgePath({ backend, platform });
+  const path =
+    pathOverride ?? defaultNativeHostBridgePath({ backend, platform });
   try {
+    const fileStats = await stat(path);
+    if (!fileStats.isFile()) {
+      return {
+        path,
+        status: "unavailable",
+        executable: false,
+        issue: "not-regular-file",
+        fileType: fileStats.isDirectory() ? "directory" : "other",
+      };
+    }
     await access(path, platform === "win32" ? constants.F_OK : constants.X_OK);
     return {
       path,
@@ -428,9 +448,19 @@ async function probeNativeHelper(
       return { path, status: "absent", executable: false };
     }
     if (code === "EACCES" || code === "EPERM") {
-      return { path, status: "unavailable", executable: false };
+      return {
+        path,
+        status: "unavailable",
+        executable: false,
+        issue: "permission-denied",
+      };
     }
-    return { path, status: "unavailable", executable: null };
+    return {
+      path,
+      status: "unavailable",
+      executable: null,
+      issue: "probe-failed",
+    };
   }
 }
 
