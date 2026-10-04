@@ -42,8 +42,8 @@ thrown values, `error` contains a safe string rendering and `errorDetails`
 contains a JSON-safe representation; circular references, unreadable values,
 and excessive nesting are marked instead of preventing the event from being
 written. These details may contain sensitive data if an adapter includes it in
-an error message or custom property, so review error content before sharing a
-replay.
+an error message or custom property. Stack traces may expose local paths and
+runtime details. Review error content before sharing a replay.
 
 Older error events with only `error` and `command` remain valid. Replay export
 preserves the original event fields, including the optional diagnostic fields.

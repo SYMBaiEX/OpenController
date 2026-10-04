@@ -2279,6 +2279,53 @@ describe("controller runtime", () => {
     ]);
   });
 
+  test("reads diagnostic error getters once without masking command errors", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "opencontroller-error-replay-"));
+    cleanupDirs.push(dir);
+    const adapter = new DryRunAdapter();
+    const failure = new Error("adapter send failed");
+    let nameReads = 0;
+    let stackReads = 0;
+    Object.defineProperty(failure, "name", {
+      configurable: true,
+      get() {
+        nameReads += 1;
+        if (nameReads > 1) throw new Error("name getter read twice");
+        return "AdapterError";
+      },
+    });
+    Object.defineProperty(failure, "stack", {
+      configurable: true,
+      get() {
+        stackReads += 1;
+        if (stackReads > 1) throw new Error("stack getter read twice");
+        return "AdapterError: adapter send failed";
+      },
+    });
+    adapter.send = async () => {
+      throw failure;
+    };
+    const controller = await createController({
+      profile: "playstation",
+      adapter,
+      replay: { dir },
+    });
+
+    await expect(controller.press("X")).rejects.toBe(failure);
+
+    const [event] = (await readFile(join(dir, "errors.jsonl"), "utf8"))
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line));
+    expect(event).toMatchObject({
+      error: "adapter send failed",
+      errorName: "AdapterError",
+      errorStack: "AdapterError: adapter send failed",
+    });
+    expect(nameReads).toBe(1);
+    expect(stackReads).toBe(1);
+  });
+
   test("tracks and replays host feedback output state once per event", async () => {
     const dir = await mkdtemp(
       join(tmpdir(), "opencontroller-feedback-replay-"),

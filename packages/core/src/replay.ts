@@ -96,6 +96,8 @@ export class ReplayLogger {
     const message = nativeError
       ? safeProperty(error, "message")
       : safeString(error);
+    const name = nativeError ? safeProperty(error, "name") : undefined;
+    const stack = nativeError ? safeProperty(error, "stack") : undefined;
     await this.write({
       type: "error",
       timestamp: Date.now(),
@@ -104,11 +106,9 @@ export class ReplayLogger {
       ...(command ? { command } : {}),
       ...(context.intent === undefined ? {} : { intent: context.intent }),
       ...(context.source === undefined ? {} : { source: context.source }),
-      ...(nativeError && typeof safeProperty(error, "name") === "string"
-        ? { errorName: safeProperty(error, "name") as string }
-        : {}),
-      ...(nativeError && typeof safeProperty(error, "stack") === "string"
-        ? { errorStack: safeProperty(error, "stack") as string }
+      ...(nativeError && typeof name === "string" ? { errorName: name } : {}),
+      ...(nativeError && typeof stack === "string"
+        ? { errorStack: stack }
         : {}),
       ...(!nativeError ? { errorDetails: toJsonSafe(error) } : {}),
     });
