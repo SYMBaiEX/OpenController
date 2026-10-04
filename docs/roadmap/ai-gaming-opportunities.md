@@ -1,6 +1,6 @@
 # OpenController AI and Gaming Opportunity Goal
 
-**Status:** Cycle 1 is merged to `main` as PRs #1–#4. The post-merge release check passes. Metric baselines remain deferred because the runner did not produce reliable outcomes, and the Reddit/accessibility evidence gaps remain open. Cycle 2 is tracked in [issue #5](https://github.com/SYMBaiEX/OpenController/issues/5), starting with refreshed research on controller compatibility.
+**Status:** Cycle 1 is merged to `main` as PRs #1–#4. The post-merge release check passes. Metric baselines remain deferred because the runner did not produce reliable outcomes, and the Reddit/accessibility evidence gaps remain open. Cycle 2 research is documented below; implementation selection is underway under [umbrella issue #5](https://github.com/SYMBaiEX/OpenController/issues/5) and research gate [#7](https://github.com/SYMBaiEX/OpenController/issues/7). No Cycle 2 code has merged.
 
 ## Product goal
 
@@ -189,6 +189,41 @@ Cycle 1's stack was merged to `main` on 2026-10-04:
 The attempted `feat/fighter-regression-baselines` branch was reset to the DAG
 parent and excluded because its measurements were not a trustworthy regression
 signal. It remains a deferred backlog item.
+
+## Cycle 2 — research decision
+
+Research gate [#7](https://github.com/SYMBaiEX/OpenController/issues/7) records the decision for umbrella [#5](https://github.com/SYMBaiEX/OpenController/issues/5). The source log below is a targeted sample of dated reports, not a market survey or prevalence estimate. A zero comment/reaction count is only an engagement snapshot. Evidence identifies debugging and conformance failure modes; it does not establish how often OpenController users encounter them. Reddit still returns HTTP 403, so direct disabled-gamer/accessibility community coverage is missing. Hacker News and general source searches were noisy and launch-oriented; enthusiasm is not counted as pain evidence.
+
+### Cycle 2 source log
+
+| Source and date | Direct evidence | What it supports and limits |
+| --- | --- | --- |
+| [Factorio Learning Environment (FLE) PR #413](https://github.com/JackHopkins/factorio-learning-environment/pull/413), 2026-09-07 (0 comments, 0 reactions at check time) | A long rollout reported a generic observation error after losing the underlying exception; replaying the same action sequence succeeded twice. The fix retained the exception and logged retry attempts. | Agent-run debugging failure and a concrete logging remedy in one benchmark ecosystem. It does not show prevalence; the error originated outside OpenController's adapter. Candidate [#8](https://github.com/SYMBaiEX/OpenController/issues/8) is limited to context attached to OpenController's own command error events. |
+| [FLE issue #417](https://github.com/JackHopkins/factorio-learning-environment/issues/417), 2026-09-14 (1 comment, 0 reactions at check time) | `execute` reports the dead RCON client as not connected while silently returning plausible empty results; a separate status path reports “Connected.” The manual workaround was `instance.rcon_client.connect()`. | A second failure mode in the same ecosystem, not independent ecosystem replication. RCON connection truth is outside this SDK's adapter boundary. |
+| [SDL issue #16220](https://github.com/libsdl-org/SDL/issues/16220), 2026-08-31; [SDL issue #14829](https://github.com/libsdl-org/SDL/issues/14829), 2026-01-15; [Steam for Linux issue #13492](https://github.com/ValveSoftware/steam-for-linux/issues/13492), 2026-08-06 | Reports cover incorrect axis-to-trigger mapping for a PDP/Switch-style pad (corrected mapping), a non-Xbox controller example-label mismatch, and DualSense touchpad mapping in MK1 (disabling Steam Input was a workaround; reconnect required a game restart). At check time each report had 0 comments/reactions. | These sit at distinct SDL and Steam layers; the small, low-engagement sample is not prevalence evidence. Candidate [#9](https://github.com/SYMBaiEX/OpenController/issues/9) checks only OpenController's own profile-to-report encoder outputs and documents host limits; it cannot fix SDL/Steam behavior. |
+| [DualSense Studio issue #2](https://github.com/SafaElmali/dualsense-studio/issues/2), 2026-09-29 | Chrome detected a Bluetooth DualSense while OBS/CEF Gamepad API did not; restarting, recreating, or interacting with the device did not help. The author explicitly requested an external input bridge. | One unconfirmed report, with no prevalence evidence. OpenController's overlay accepts caller-provided state but does not capture physical gamepads. Candidate [#10](https://github.com/SYMBaiEX/OpenController/issues/10) proposes a macOS-first input source with substantial native API and permission cost. |
+| [Steam for Linux issue #13665](https://github.com/ValveSoftware/steam-for-linux/issues/13665), 2026-09-29; [issue #13029](https://github.com/ValveSoftware/steam-for-linux/issues/13029), 2026-03-23 | Reports describe Steam Input virtual-device recreation or reset after host/game lifecycle events. | Lower-fit lifecycle theme: the Linux uinput helper neutralizes on disconnect/stream teardown, but the SDK cannot repair upstream Steam/host lifecycle resets. Retain as deferred evidence, not a Cycle 2 build slice. |
+
+### Ranking and decision
+
+1. **Rank 1: [#8 — replay command error context](https://github.com/SYMBaiEX/OpenController/issues/8).** High repository fit and lower implementation cost. Structured error context can improve the SDK-controlled logging boundary. Evidence is concrete but limited to one benchmark ecosystem, and the slice must not claim to fix upstream observation or RCON errors.
+2. **Rank 2: [#9 — profile-to-report conformance matrix](https://github.com/SYMBaiEX/OpenController/issues/9).** High repository fit and preventive value. Evidence is indirect because the observed mapping defects are upstream; the slice asserts correctness of OpenController's own encoder outputs and documents consumer/host limitations. It does not repair SDL or Steam.
+3. **Defer as exploratory: [#10 — macOS physical gamepad input for OBS](https://github.com/SYMBaiEX/OpenController/issues/10).** One report motivates exploration, but independent reports and macOS API/permission feasibility are needed before implementation selection.
+
+Lifecycle recovery remains deferred because ownership is largely upstream. Accessibility/remapping remains deferred until direct target-community research is available. Game perception remains outside the SDK's current scope and has weak fit evidence. This targeted sample supports bounded implementation hypotheses; it cannot estimate market prevalence or establish that these are the most common user problems.
+
+```mermaid
+flowchart TD
+  R[Research decision: issue #7] --> A[Selected build: #8 replay command error context]
+  R --> B[Selected build: #9 profile-to-report conformance matrix]
+  R -. exploratory, deferred .-> C[#10 macOS physical gamepad input for OBS]
+  A --> D[Independent review and integration]
+  B --> D
+  D --> E[Merge both feature PRs in either order]
+  E --> F[Next cycle]
+```
+
+**PR dependency:** research PR #11 is the shared parent and review gate for the two independent feature slices tracked by issues [#8](https://github.com/SYMBaiEX/OpenController/issues/8) and [#9](https://github.com/SYMBaiEX/OpenController/issues/9). Their feature PRs may be opened as children of #11, then retargeted or rebased onto `main` after #11 merges. They can be reviewed and merged in either order; neither feature depends on the other. Issue #7 is the research gate and #5 is the umbrella.
 
 ## Next cycle
 
