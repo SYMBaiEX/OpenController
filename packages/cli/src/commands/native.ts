@@ -1,6 +1,9 @@
 import { constants } from "node:fs";
 import { access, stat } from "node:fs/promises";
-import type { ControllerProfileName } from "@opencontroller/core";
+import type {
+  CommandContext,
+  ControllerProfileName,
+} from "@opencontroller/core";
 import { createController } from "@opencontroller/core";
 import {
   createNativeHostBridgeAdapter,
@@ -122,6 +125,29 @@ export type NativeTestPlan = {
 export type NativeTestAction = {
   button: string;
   trigger: string;
+};
+
+export type NativeTestRunnerController<State = unknown> = {
+  press(
+    button: string,
+    durationMs: number,
+    context: CommandContext,
+  ): Promise<void>;
+  moveStick(
+    stick: "LEFT",
+    value: { x: number; y: number },
+    durationMs: number,
+    context: CommandContext,
+  ): Promise<void>;
+  trigger(
+    trigger: string,
+    value: number,
+    durationMs: number,
+    context: CommandContext,
+  ): Promise<void>;
+  neutral(context: CommandContext): Promise<void>;
+  getState(): State;
+  disconnect(): Promise<void>;
 };
 
 export type NativeSetupBackendPlan =
@@ -272,25 +298,7 @@ export async function nativeTestCommand(
     replay: false,
   });
 
-  await controller.press(plan.action.button, 80, {
-    intent: "native_test_press",
-    source: "opencontroller-cli",
-  });
-  await controller.moveStick("LEFT", { x: 0, y: -1 }, 120, {
-    intent: "native_test_move",
-    source: "opencontroller-cli",
-  });
-  await controller.trigger(plan.action.trigger, 0.5, 90, {
-    intent: "native_test_trigger",
-    source: "opencontroller-cli",
-  });
-  await controller.neutral({
-    intent: "native_test_neutral",
-    source: "opencontroller-cli",
-  });
-
-  const state = controller.getState();
-  await controller.disconnect();
+  const state = await runNativeTest(controller, plan);
 
   console.log("OpenController native test completed");
   console.log(
@@ -306,6 +314,66 @@ export async function nativeTestCommand(
       2,
     ),
   );
+}
+
+export async function runNativeTest<State>(
+  controller: NativeTestRunnerController<State>,
+  plan: NativeTestPlan,
+): Promise<State> {
+  let actionFailed = false;
+  let actionFailure: unknown;
+  let capturedState: { value: State } | undefined;
+
+  try {
+    await controller.press(plan.action.button, 80, {
+      intent: "native_test_press",
+      source: "opencontroller-cli",
+    });
+    await controller.moveStick("LEFT", { x: 0, y: -1 }, 120, {
+      intent: "native_test_move",
+      source: "opencontroller-cli",
+    });
+    await controller.trigger(plan.action.trigger, 0.5, 90, {
+      intent: "native_test_trigger",
+      source: "opencontroller-cli",
+    });
+    await controller.neutral({
+      intent: "native_test_neutral",
+      source: "opencontroller-cli",
+    });
+    capturedState = { value: controller.getState() };
+  } catch (error) {
+    actionFailed = true;
+    actionFailure = error;
+  }
+
+  let disconnectFailed = false;
+  let disconnectFailure: unknown;
+  try {
+    await controller.disconnect();
+  } catch (error) {
+    disconnectFailed = true;
+    disconnectFailure = error;
+  }
+
+  if (actionFailed && disconnectFailed) {
+    throw new AggregateError(
+      [actionFailure, disconnectFailure],
+      "Native test action failed and controller disconnect also failed",
+      { cause: actionFailure },
+    );
+  }
+  if (actionFailed) {
+    throw actionFailure;
+  }
+  if (disconnectFailed) {
+    throw disconnectFailure;
+  }
+
+  if (!capturedState) {
+    throw new Error("Native test finished without capturing controller state");
+  }
+  return capturedState.value;
 }
 
 export function createNativeTestPlan(
