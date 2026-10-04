@@ -166,11 +166,14 @@ opencontroller native doctor --backend all --json
 
 At the report level, `ok` preserves the legacy backend-diagnostics aggregate
 used by `native doctor --check`; it does not include helper availability.
-`helperReady` reports whether every selected helper is present and accessible,
-and `ready` is true only when both backend diagnostics and all selected helpers
-are ready. Each backend row also includes a corresponding `ready` value. The
-human-readable output labels these checks separately so a passing platform
-probe cannot be mistaken for a launchable backend.
+`helperReady` is tri-state: `false` for a known absent/inaccessible helper,
+`true` when every helper is accessible, and `null` when a filesystem probe
+could not determine helper state. `ready` is also tri-state. It is `false` when
+a required prerequisite or helper is known to be unavailable, `true` when all
+required checks pass, and `null` when a required part of readiness is
+unverified. Each backend row also includes a corresponding `ready` value. The
+human-readable output says `unknown` for the `null` case and labels diagnostic
+checks and helper presence separately.
 
 Each backend report includes the expected helper path and whether it is
 available, absent, or inaccessible; platform and prerequisite checks; declared
@@ -193,9 +196,13 @@ inspect signing identity, notarize packages, or activate platform extensions.
 A `needed` or `unknown` signing, elevation, or activation status is a boundary
 of this report, not an automated verdict that the host can satisfy the
 requirement. Windows currently checks legacy ViGEmBus state but does not verify
-the VHF driver's installed or signed state; macOS checks authoring tools but
-not DriverKit approval or activation; Linux checks writable uinput nodes and
-reports recommendations for module and access setup.
+the VHF driver's installed or signed state, so elevation and signing are
+reported as unknown conditional requirements (they matter if the driver must
+be installed or updated). macOS checks authoring tools but not signing or
+DriverKit approval/activation. Linux checks writable uinput nodes and reports
+recommendations for module and access setup. Accordingly, Windows and macOS
+readiness remains `null` when helper files are available but these states have
+not been independently verified.
 
 Consumers should branch on `schemaVersion`, tolerate additional object fields,
 and use `nextSteps` for display rather than parsing the human-readable

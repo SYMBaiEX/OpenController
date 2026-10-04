@@ -118,7 +118,17 @@ describe("native backend diagnostics", () => {
     const result = await diagnoseNativeBackends({
       selection: "linux-uinput",
       platform: "linux",
-      diagnoseBackend: async (backend) => fakeReport(backend, true),
+      diagnoseBackend: async (backend) => ({
+        ...fakeReport(backend, true),
+        diagnostics: {
+          platform: "linux",
+          supportedPlatform: true,
+          ok: true,
+          selectedDevicePath: "/dev/uinput",
+          moduleLoaded: true,
+          devices: [{ path: "/dev/uinput", exists: true, writable: true }],
+        },
+      }),
       probeHelper: async () => ({
         path: "/fake/missing-helper",
         status: "absent",
@@ -134,6 +144,99 @@ describe("native backend diagnostics", () => {
     expect(output).toContain("Backend diagnostics ready: yes");
     expect(output).toContain("Native helpers available: no");
     expect(output).toContain("Ready: no");
+  });
+
+  test("reports readiness as unknown while Windows driver state is unverified", async () => {
+    const result = await diagnoseNativeBackends({
+      selection: "windows-virtual-gamepad",
+      platform: "win32",
+      diagnoseBackend: async (backend) => fakeReport(backend, true),
+      probeHelper: async () => ({
+        path: "C:\\fake\\host-bridge.exe",
+        status: "available",
+        executable: null,
+      }),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.reports[0]?.requirements).toContainEqual(
+      expect.objectContaining({ id: "elevation", status: "unknown" }),
+    );
+    expect(result.reports[0]?.requirements).toContainEqual(
+      expect.objectContaining({ id: "signing", status: "unknown" }),
+    );
+    expect(result.reports[0]?.ready).toBeNull();
+    expect(result.ready).toBeNull();
+    expect(formatNativeDoctor(result)).toContain("Ready: unknown");
+  });
+
+  test("keeps helper readiness unknown when a filesystem probe fails", async () => {
+    const result = await diagnoseNativeBackends({
+      selection: "linux-uinput",
+      platform: "linux",
+      diagnoseBackend: async (backend) => fakeReport(backend, true),
+      probeHelper: async () => ({
+        path: "/fake/linux-helper",
+        status: "unavailable",
+        executable: null,
+        issue: "probe-failed",
+      }),
+    });
+
+    expect(result.helperReady).toBeNull();
+    expect(result.reports[0]?.ready).toBeNull();
+    expect(result.ready).toBeNull();
+  });
+
+  test("reports known Linux prerequisite failures as not ready", async () => {
+    const result = await diagnoseNativeBackends({
+      selection: "linux-uinput",
+      platform: "linux",
+      diagnoseBackend: async (backend) => ({
+        ...fakeReport(backend, false),
+        diagnostics: {
+          platform: "linux",
+          supportedPlatform: true,
+          ok: false,
+          moduleLoaded: true,
+          devices: [{ path: "/dev/uinput", exists: true, writable: false }],
+        },
+      }),
+      probeHelper: async () => ({
+        path: "/fake/linux-helper",
+        status: "available",
+        executable: true,
+      }),
+    });
+
+    expect(result.reports[0]?.ready).toBe(false);
+    expect(result.ready).toBe(false);
+  });
+
+  test("reports ready when Linux prerequisites and helper are verified", async () => {
+    const result = await diagnoseNativeBackends({
+      selection: "linux-uinput",
+      platform: "linux",
+      diagnoseBackend: async (backend) => ({
+        ...fakeReport(backend, true),
+        diagnostics: {
+          platform: "linux",
+          supportedPlatform: true,
+          ok: true,
+          selectedDevicePath: "/dev/uinput",
+          moduleLoaded: true,
+          devices: [{ path: "/dev/uinput", exists: true, writable: true }],
+        },
+      }),
+      probeHelper: async () => ({
+        path: "/fake/linux-helper",
+        status: "available",
+        executable: true,
+      }),
+    });
+
+    expect(result.reports[0]?.ready).toBe(true);
+    expect(result.ready).toBe(true);
   });
 
   test("rejects a directory at the configured helper path", async () => {

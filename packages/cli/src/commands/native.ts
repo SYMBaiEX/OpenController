@@ -55,7 +55,7 @@ export type NativeBackendReport = {
   recommendations: string[];
   diagnostics: unknown;
   formatted: string;
-  ready?: boolean;
+  ready?: boolean | null;
   helper?: NativeHelperStatus;
   requirements?: NativeReadinessRequirement[];
   capabilities?: NativeBackendCapabilities;
@@ -93,8 +93,8 @@ export type NativeDoctorResult = {
   platform: NodeJS.Platform;
   /** Legacy diagnostic-only aggregate; retained for --check compatibility. */
   ok: boolean;
-  helperReady: boolean;
-  ready: boolean;
+  helperReady: boolean | null;
+  ready: boolean | null;
   reports: NativeBackendReport[];
 };
 
@@ -397,7 +397,7 @@ export async function diagnoseNativeBackends(
       ...report,
       helper,
       requirements,
-      ready: report.ok && helper.status === "available",
+      ready: backendReadiness(report, helper, requirements),
       capabilities: backendCapabilities(id),
       nextSteps: [
         ...new Set([
@@ -414,9 +414,12 @@ export async function diagnoseNativeBackends(
   }
 
   const ok = reports.length > 0 && reports.every((report) => report.ok);
-  const helperReady =
-    reports.length > 0 &&
-    reports.every((report) => report.helper?.status === "available");
+  const helperReady = aggregateReadiness(
+    reports.map((report) => helperReadiness(report.helper)),
+  );
+  const ready = aggregateReadiness(
+    reports.map((report) => report.ready ?? null),
+  );
 
   return {
     schemaVersion: 1,
@@ -425,9 +428,57 @@ export async function diagnoseNativeBackends(
     platform,
     ok,
     helperReady,
-    ready: ok && helperReady,
+    ready,
     reports,
   };
+}
+
+function backendReadiness(
+  report: NativeBackendReport,
+  helper: NativeHelperStatus,
+  requirements: NativeReadinessRequirement[],
+): boolean | null {
+  if (!report.supportedPlatform) {
+    return false;
+  }
+  if (requirements.some((requirement) => requirement.status === "needed")) {
+    return false;
+  }
+  if (
+    helper.status === "absent" ||
+    (helper.issue !== "probe-failed" && helper.status !== "available")
+  ) {
+    return false;
+  }
+  if (requirements.some((requirement) => requirement.status === "unknown")) {
+    return null;
+  }
+  if (helper.status !== "available") {
+    return null;
+  }
+  return true;
+}
+
+function aggregateReadiness(statuses: Array<boolean | null>): boolean | null {
+  if (statuses.length === 0 || statuses.some((status) => status === false)) {
+    return false;
+  }
+  if (statuses.every((status) => status === true)) {
+    return true;
+  }
+  return null;
+}
+
+function helperReadiness(
+  helper: NativeHelperStatus | undefined,
+): boolean | null {
+  if (helper?.status === "available") {
+    return true;
+  }
+  if (helper?.status === "unavailable" && helper.issue === "probe-failed") {
+    return null;
+  }
+  return false;
 }
 
 async function probeNativeHelper(
@@ -567,15 +618,15 @@ function readinessRequirements(
       },
       {
         id: "elevation",
-        status: report.supportedPlatform ? "needed" : "unknown",
+        status: "unknown",
         detail:
-          "Administrator elevation is required to install or update the virtual HID driver; native doctor never requests elevation.",
+          "Administrator elevation is required only if the virtual HID driver must be installed or updated; its installation state is not probed and native doctor never requests elevation.",
       },
       {
         id: "signing",
-        status: report.supportedPlatform ? "needed" : "unknown",
+        status: "unknown",
         detail:
-          "Review and sign the Windows driver package with a trusted certificate before installation.",
+          "Windows requires a trusted signed driver package; the installed VHF driver and its signing state are not probed.",
       },
     );
   } else {
@@ -598,15 +649,15 @@ function readinessRequirements(
       },
       {
         id: "signing",
-        status: report.supportedPlatform ? "needed" : "unknown",
+        status: "unknown",
         detail:
-          "Apple-approved DriverKit entitlements, code signing, and notarization are required for distribution.",
+          "DriverKit distribution requires approved entitlements, code signing, and notarization; this host's signing state is not probed.",
       },
       {
         id: "activation",
-        status: report.supportedPlatform ? "needed" : "unknown",
+        status: "unknown",
         detail:
-          "The user must approve and activate the DriverKit System Extension; native doctor does not inspect activation state.",
+          "System Extension approval and activation are required to use the DriverKit device; activation state is not probed.",
       },
     );
   }
@@ -680,7 +731,7 @@ export function formatNativeDoctor(result: NativeDoctorResult): string {
     `Platform: ${result.platform}`,
     `Backend diagnostics ready: ${result.ok ? "yes" : "no"}`,
     `Native helpers available: ${result.helperReady ? "yes" : "no"}`,
-    `Ready: ${result.ready ? "yes" : "no"}`,
+    `Ready: ${readinessLabel(result.ready)}`,
   ];
 
   if (result.reports.length === 0) {
@@ -695,7 +746,7 @@ export function formatNativeDoctor(result: NativeDoctorResult): string {
       `  supported on this host: ${report.supportedPlatform ? "yes" : "no"}`,
       `  backend diagnostics ready: ${report.ok ? "yes" : "no"}`,
       `  helper available: ${report.helper?.status === "available" ? "yes" : "no"}`,
-      `  ready: ${(report.ready ?? false) ? "yes" : "no"}`,
+      `  ready: ${readinessLabel(report.ready)}`,
       "",
       indent(
         report.formatted.replace(/^Ready:/m, "Backend diagnostics ready:"),
@@ -705,6 +756,13 @@ export function formatNativeDoctor(result: NativeDoctorResult): string {
   }
 
   return lines.join("\n");
+}
+
+function readinessLabel(status: boolean | null | undefined): string {
+  if (status === true) {
+    return "yes";
+  }
+  return status === false ? "no" : "unknown";
 }
 
 async function diagnoseNativeBackend(
