@@ -51,13 +51,13 @@ import { createControllerHub } from "@opencontroller/core";
 
 const hub = await createControllerHub();
 
-const playerOne = await hub.createController({
+const playerOne = await hub.add({
   id: "player-1",
   profile: "xbox",
   adapter: "dry-run",
 });
 
-const playerTwo = await hub.createController({
+const playerTwo = await hub.add({
   id: "player-2",
   profile: "xbox",
   adapter: "dry-run",
@@ -67,6 +67,11 @@ await playerOne.press("A", 80);
 await playerTwo.press("B", 80);
 await hub.disconnectAll();
 ```
+
+Hub IDs are caller-assigned logical identifiers for controllers in this hub.
+They do not identify physical devices or host/browser slots. Use `hub.get(id)`
+to retrieve an added controller; `hub.disconnectAll()` disconnects every
+controller and clears the hub so those IDs can be added again.
 
 ## Analog Button Pressure
 
