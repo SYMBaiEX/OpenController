@@ -1,6 +1,6 @@
 # OpenController AI and Gaming Opportunity Goal
 
-**Status:** Cycle 1 is merged to `main` as PRs #1–#4. Cycle 2 issues [#8](https://github.com/SYMBaiEX/OpenController/issues/8) and [#9](https://github.com/SYMBaiEX/OpenController/issues/9) merged in [PR #12](https://github.com/SYMBaiEX/OpenController/pull/12) (`067fc591fe34e7d09cfdfedcf8db48fcd6a7c0d1`) and [PR #13](https://github.com/SYMBaiEX/OpenController/pull/13) (`5f7e6fc7054654f220a6cb45a4c438ae0d9e4ae7`); [#10](https://github.com/SYMBaiEX/OpenController/issues/10) remains deferred. Cycle 3 issue [#14](https://github.com/SYMBaiEX/OpenController/issues/14) merged in [PR #19](https://github.com/SYMBaiEX/OpenController/pull/19) (`f2baa6b297f05c20b065baab196cce8d6a725bdc`); [#15](https://github.com/SYMBaiEX/OpenController/issues/15) remains deferred. Cycle 4 selected issue [#22](https://github.com/SYMBaiEX/OpenController/issues/22) merged in [PR #25](https://github.com/SYMBaiEX/OpenController/pull/25) at `8eb744cf3167dee9838160ab7364ca6c3bc66e5f`; its roadmap closeout is in progress under gate [#23](https://github.com/SYMBaiEX/OpenController/issues/23). Cycle 5 gate [#29](https://github.com/SYMBaiEX/OpenController/issues/29) is blocked by #23 and tracks candidates [#26](https://github.com/SYMBaiEX/OpenController/issues/26)–[#28](https://github.com/SYMBaiEX/OpenController/issues/28). Whole-match regression baselines remain deferred until a stable scenario is demonstrated; Reddit and accessibility source gaps remain open.
+**Status:** Cycle 1 is merged to `main` as PRs #1–#4. Cycle 2 issues [#8](https://github.com/SYMBaiEX/OpenController/issues/8) and [#9](https://github.com/SYMBaiEX/OpenController/issues/9) merged in [PR #12](https://github.com/SYMBaiEX/OpenController/pull/12) (`067fc591fe34e7d09cfdfedcf8db48fcd6a7c0d1`) and [PR #13](https://github.com/SYMBaiEX/OpenController/pull/13) (`5f7e6fc7054654f220a6cb45a4c438ae0d9e4ae7`); [#10](https://github.com/SYMBaiEX/OpenController/issues/10) remains deferred. Cycle 3 issue [#14](https://github.com/SYMBaiEX/OpenController/issues/14) merged in [PR #19](https://github.com/SYMBaiEX/OpenController/pull/19) (`f2baa6b297f05c20b065baab196cce8d6a725bdc`); [#15](https://github.com/SYMBaiEX/OpenController/issues/15) remains deferred. Cycle 4 issue [#22](https://github.com/SYMBaiEX/OpenController/issues/22) merged in [PR #25](https://github.com/SYMBaiEX/OpenController/pull/25) at `8eb744cf3167dee9838160ab7364ca6c3bc66e5f`, and gate [#23](https://github.com/SYMBaiEX/OpenController/issues/23) closed in PR #30 (`62e8b9569124219cf6c5fb5b5ad824e18de3c901`). Cycle 5 gate [#29](https://github.com/SYMBaiEX/OpenController/issues/29) is active and waits on selected issue [#27](https://github.com/SYMBaiEX/OpenController/issues/27); candidates [#26](https://github.com/SYMBaiEX/OpenController/issues/26) and [#28](https://github.com/SYMBaiEX/OpenController/issues/28) are deferred. Whole-match regression baselines remain deferred until a stable scenario is demonstrated; Reddit and accessibility source gaps remain open.
 
 ## Product goal
 
@@ -160,17 +160,14 @@ still not probed by the current native doctor, so their readiness remains
 
 ```mermaid
 flowchart TD
-  A[Cycle 4 issue #22 implementation] --> B[PR #25 review and checks]
-  B --> C[PR #25 merged to main]
-  C --> D[Cycle 4 roadmap closeout PR]
-  D --> E[Close Cycle 4 gate #23]
-  E --> F[Unblock Cycle 5 research gate #29]
-  F --> G[Refresh sources and audit current main]
-  G --> H[Rank Cycle 5 candidates #26-#28]
-  H --> I[Select one bounded issue or record no-build]
-  I --> J[Stacked implementation PRs, review, checks, and merge]
-  J --> K[Update roadmap and open Cycle 6 gate]
-  K --> L[Close Cycle 5 gate #29]
+  A[Cycle 4 implementation PR #25 merged] --> B[Cycle 4 closeout PR #30 merged; gate #23 closed]
+  B --> C[Cycle 5 gate #29: refresh evidence and audit main]
+  C --> D[Select #27; defer #26 and #28]
+  D --> E[Fix ControllerHub docs and logical-ID tests]
+  E --> F[Independent review and required checks]
+  F --> G[Merge implementation PR stack]
+  G --> H[Update roadmap and open Cycle 6 gate]
+  H --> I[Close Cycle 5 gate #29]
 ```
 
 The DAG repeats research, repository audit, bounded selection, implementation,
@@ -285,9 +282,49 @@ Implementation PR [#25](https://github.com/SYMBaiEX/OpenController/pull/25) merg
 
 PR #25 passed CI and received an independent gpt-6-luna agent review that found no blocker. GitHub has no substantive review record: Copilot could not review because of its quota limit, and CodeRabbit was still pending at merge. `bun run release:check` passed: 166 tests, zero failures, typecheck, all 9 build tasks, audit with no vulnerabilities, and package checks. A seeded headless smoke run with seed 42 reported matching server and summary metadata and 16 local decisions. The Playwright CDN returned HTTP 403, so the smoke used the existing system Chromium. These checks validate SDK-controlled policy behavior and packaging, not external game, host, or hardware behavior.
 
-Cycle 4 closes only after this roadmap update merges and gate #23 is closed. Candidate backlog for Cycle 5 is tracked in milestone 4: [#26 — user-run browser hardware routing check](https://github.com/SYMBaiEX/OpenController/issues/26), [#27 — multi-controller slot ownership and recovery](https://github.com/SYMBaiEX/OpenController/issues/27), and [#28 — input latency at explicit SDK boundaries](https://github.com/SYMBaiEX/OpenController/issues/28). The dated sources are adjacent single-project reports: [Tanks #616](https://github.com/AustinOrphan/tanks/issues/616) (2026-09-08), [Selkies #431](https://github.com/selkies-project/selkies/issues/431) (2026-09-29), [PortareOS #436](https://github.com/portare-ch/portareos/issues/436) (2026-09-29), [DuelBox-Web #133](https://github.com/swiftSaneGames/DuelBox-Web/issues/133) (2026-08-19), and the [Chrome Gamepad event-driven proposal #1313](https://github.com/GoogleChrome/modern-web-guidance-src/issues/1313) (2026-08-14). They seed investigation and do not indicate prevalence or OpenController defects. The new research gate must refresh broader communities, verify current repository fit, and rank or reject these candidates.
+Cycle 4 closed after roadmap closeout PR [#30](https://github.com/SYMBaiEX/OpenController/pull/30) merged at `62e8b9569124219cf6c5fb5b5ad824e18de3c901`; gate #23 and milestone 3 are closed. Cycle 5 gate [#29](https://github.com/SYMBaiEX/OpenController/issues/29) is active in milestone 4. It selected [#27 — fix ControllerHub docs and test logical ID lifecycle](https://github.com/SYMBaiEX/OpenController/issues/27) and deferred [#26 — user-run browser hardware routing](https://github.com/SYMBaiEX/OpenController/issues/26) and [#28 — explicit-boundary latency measurement](https://github.com/SYMBaiEX/OpenController/issues/28). Issue #27 blocks #29 until implementation, review, checks, merge, roadmap closeout, and a Cycle 6 gate are complete.
 
-Cycle 5 research gate [#29](https://github.com/SYMBaiEX/OpenController/issues/29) is blocked by #23. Once unblocked, it will re-rank #26–#28 against refreshed evidence and current `main`, select one bounded slice or a no-build decision, then require independent implementation review, checks, merge, roadmap update, and a Cycle 6 gate before closing.
+### Cycle 5 research decision (2026-10-04)
+
+The gate refreshed sources across HN, OpenAI Developer Community, Steam for Linux, Steam Community, and targeted GitHub projects, then audited integrated `main` at `62e8b9569124219cf6c5fb5b5ad824e18de3c901`. The sources below are dated examples, not a survey or prevalence estimate. External host/application reports do not establish an OpenController defect.
+
+| Source and date | Direct observation | Relevance and evidence limit |
+| --- | --- | --- |
+| [Clash Royale agent builder on HN #46297477](https://news.ycombinator.com/item?id=46297477), 2025-12-17 | Builder reports about 7 seconds for screenshot, vision, decision, and tool cycles; staggered three agents to act every 2–3 seconds and added an automatic opening action to establish tempo. | Timed agents may benefit from reusable low-overhead actions, but the SDK cannot speed model reasoning. One self-reported project. |
+| [T-Rex Runner attempt on HN #43963570](https://news.ycombinator.com/item?id=43963570), 2025-05-12 | Author says a Claude/Playwright attempt failed because latency was too high. | One attempt with no timing breakdown; the delay could be model, tool, browser, or input. |
+| [OpenAI Community: Pokémon Silver with Computer Use](https://community.openai.com/t/let-chatgpt-play-games-through-computer-use/1401100), 2026-09-26 | User says setup, navigation, repeated dialogue, and simple movement consume Computer Use allowance and asks for a lower-cost control mode. | One product request; no evidence that this transfers to other agents or controller SDKs. |
+| [Steam for Linux #13665](https://github.com/ValveSoftware/steam-for-linux/issues/13665), 2026-09-29 | Steam Machine reporter says Steam recreates its virtual pad on app launch, leaving already-running apps with stale handles until restart. | Detailed upstream Steam lifecycle report; outside OpenController ownership. |
+| [Steam for Linux #13418](https://github.com/ValveSoftware/steam-for-linux/issues/13418), 2026-07-15 | Steam Deck user says returning from Discord leaves a game without controller input until the game restarts. | One host lifecycle report, not an SDK defect. |
+| [Jellyfin Web #8379](https://github.com/jellyfin/jellyfin-web/issues/8379), 2026-08-19 | Two DS4s overwrite a shared gamepad state, making TV navigation erratic. | Application-specific input ownership example. |
+| [Cockpit #3088](https://github.com/bluerobotics/cockpit/issues/3088), 2026-09-22 | ROV users ask that a primary joystick retain control when another gamepad connects; current behavior forwards both. | Adjacent non-gaming input-ownership request. |
+| [Selkies #431](https://github.com/selkies-project/selkies/issues/431), 2026-09-29; [ROMM #46](https://github.com/romm-streaming/romm-broker/issues/46), 2026-09-17 | Same reporter cross-posted a browser/virtual-slot conflict; reinitializing Game Mode restored input, but reproducibility was uncertain. | Counted as one report, not two; host/browser ownership is upstream. |
+| [PortareOS #436](https://github.com/portare-ch/portareos/issues/436), 2026-09-29; [DuelBox-Web #133](https://github.com/swiftSaneGames/DuelBox-Web/issues/133), 2026-08-19; [Chrome proposal #1313](https://github.com/GoogleChrome/modern-web-guidance-src/issues/1313), 2026-08-14 | One hardware report estimates a polling contribution, one project requests input/browser latency measurements, and one browser proposal describes event-driven input. | Sparse adjacent evidence; no OpenController-specific latency failure or adoption proof. |
+
+Reddit, Google search, and SDL Discourse search returned HTTP 403. Steam Community search was reachable but surfaced only older, low-value threads for this decision. HN Algolia and OpenAI Discourse JSON were reachable. The sweep did not find a clear recurring AI-agent-specific controller problem; accessibility-community coverage remains open. Search was targeted rather than exhaustive, and comments/reactions were not used as prevalence measures.
+
+#### Repository audit and ranking
+
+The audit confirmed a direct documentation/API mismatch: `packages/core/README.md` calls `hub.createController`, while the exported `ControllerHub` implements `add`, `get`, `has`, `list`, `states`, and `disconnectAll`. The README's two-controller example therefore does not match the public class. Existing tests verify two dry-run controllers and independent state, but omit duplicate logical-ID rejection and reusing an ID after `disconnectAll`. The SDK assigns logical IDs supplied by callers; it does not discover physical devices or own browser/OS slot identity.
+
+| Decision | Candidate | Fit and evidence | Cost and risk |
+| --- | --- | --- | --- |
+| Selected | [#27 ControllerHub API contract](https://github.com/SYMBaiEX/OpenController/issues/27) | Fixes a concrete first-party example that calls a nonexistent method and adds missing lifecycle tests. Several other projects report controller ownership conflicts, but those reports do not prove prevalence or an OpenController defect. | Low/medium, about 1–2 days. High confidence in the code/docs mismatch; low confidence in prevalence. |
+| Deferred | [#26 real-browser hardware routing check](https://github.com/SYMBaiEX/OpenController/issues/26) | A detailed adjacent project QA gap exists, but no reproducible supported host/browser/hardware path was established. | Medium/high effort and manual hardware needs. |
+| Deferred | [#28 SDK-boundary input latency](https://github.com/SYMBaiEX/OpenController/issues/28) | Existing latency status is supplied rather than an end-to-end measurement; a safe clock-compatible SDK boundary remains unproven. | Medium effort with clock-domain and overclaim risk. |
+
+**Selected scope:** correct the ControllerHub README example to use the actual public API, test duplicate caller-supplied IDs and reuse after `disconnectAll`, preserve the multi-controller independent-state test, and explain that IDs do not identify physical devices or host slots. Do not add device discovery, automatic mapping, native adapter sharing, or cross-platform reconnect claims. Issue #27 blocks gate #29; #26 and #28 are deferred outside milestone 4.
+
+```mermaid
+flowchart TD
+  A[Cycle 4 closeout PR #30; gate #23 closed] --> B[Cycle 5 public-source sweep]
+  B --> C[Audit current main 62e8b95]
+  C --> D[Select #27; defer #26 and #28]
+  D --> E[Fix ControllerHub docs and test logical-ID lifecycle]
+  E --> F[Independent review and required checks]
+  F --> G[Merge implementation PR stack]
+  G --> H[Update roadmap and open Cycle 6 gate]
+  H --> I[Close Cycle 5 gate #29]
+```
 
 **GitHub Projects tracking:** project creation was retried during this cycle and GitHub again returned `Resource not accessible by integration` for `createProjectV2`. No Project V2 exists. Milestones and the native issue dependency graph are the current tracker until the connected GitHub integration has Projects write permission.
 
