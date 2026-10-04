@@ -153,3 +153,35 @@ path OpenController expects before a bridge binary is present.
 | `linux-uinput` | Linux | `@opencontroller/native-linux-uinput` |
 | `windows-vhf` | Windows | `@opencontroller/native-windows-virtual-gamepad` |
 | `macos-driverkit` | macOS | `@opencontroller/native-macos-driverkit` |
+
+## Readiness Report
+
+`native doctor --json` prints a versioned JSON report (`schemaVersion: 1`) for
+automation and support bundles:
+
+```bash
+opencontroller native doctor --backend current --json
+opencontroller native doctor --backend all --json
+```
+
+Each backend report includes the expected helper path and whether it is
+available, absent, or inaccessible; platform and prerequisite checks; declared
+backend capabilities; requirement statuses; and actionable next steps. The
+`capabilities` object describes the SDK adapter's configured protocol support,
+not a live check that a driver or virtual device is functioning.
+
+Doctor is read-only. It checks filesystem accessibility and invokes only the
+existing platform diagnostic probes. It does not build or install helpers,
+load kernel modules, change device permissions, install drivers, elevate,
+inspect signing identity, notarize packages, or activate platform extensions.
+A `needed` or `unknown` signing, elevation, or activation status is a boundary
+of this report, not an automated verdict that the host can satisfy the
+requirement. Windows currently checks legacy ViGEmBus state but does not verify
+the VHF driver's installed or signed state; macOS checks authoring tools but
+not DriverKit approval or activation; Linux checks writable uinput nodes and
+reports recommendations for module and access setup.
+
+Consumers should branch on `schemaVersion`, tolerate additional object fields,
+and use `nextSteps` for display rather than parsing the human-readable
+`formatted` diagnostics. Requirement fields describe matters the CLI does not
+attempt to satisfy.
