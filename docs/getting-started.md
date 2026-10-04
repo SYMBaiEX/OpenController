@@ -8,32 +8,16 @@ bun test
 bun run build
 ```
 
-Create a dry-run controller:
+Run the standalone Getting Started dry-run example from the repository root:
 
-```ts
-import { createController } from "@opencontroller/core";
-
-const controller = await createController({
-  profile: "xbox",
-  adapter: "dry-run"
-});
-
-await controller.press("A", 100);
-await controller.press("RT", { durationMs: 120, pressure: 0.35 });
-await controller.moveStick("LEFT", { x: 0, y: -1 }, 300);
-await controller.setButton("LB", true);
-await controller.setTrigger("RT", 0.25);
-await controller.setDpad("UP_RIGHT");
-await controller.setState({
-  buttons: { LB: true },
-  triggers: { RT: 0.1 },
-  sticks: { LEFT: { x: 0.4, y: 0 } },
-  dpad: "NEUTRAL"
-});
-await controller.setButton("LB", false);
-await controller.neutral();
-await controller.disconnect();
+```bash
+bun run examples/basic-dry-run/getting-started.ts
 ```
+
+The [runnable source](../examples/basic-dry-run/getting-started.ts) creates a
+dry-run controller, applies a button, trigger, and stick state patch, then
+neutralizes and disconnects. CI runs this same source and checks its state and
+replay output with `bun run check:dry-run-examples`.
 
 Dry-run is the default adapter because it requires no native permissions and
 still updates state, safety, and replay logs.
