@@ -186,6 +186,10 @@ describe("native backend diagnostics", () => {
     expect(result.helperReady).toBeNull();
     expect(result.reports[0]?.ready).toBeNull();
     expect(result.ready).toBeNull();
+    const output = formatNativeDoctor(result);
+    expect(output).toContain("Native helpers available: unknown");
+    expect(output).toContain("helper available: unknown");
+    expect(output).toContain("Ready: unknown");
   });
 
   test("reports known Linux prerequisite failures as not ready", async () => {

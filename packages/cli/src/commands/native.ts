@@ -730,7 +730,7 @@ export function formatNativeDoctor(result: NativeDoctorResult): string {
     `Selection: ${result.selection}`,
     `Platform: ${result.platform}`,
     `Backend diagnostics ready: ${result.ok ? "yes" : "no"}`,
-    `Native helpers available: ${result.helperReady ? "yes" : "no"}`,
+    `Native helpers available: ${readinessLabel(result.helperReady)}`,
     `Ready: ${readinessLabel(result.ready)}`,
   ];
 
@@ -745,7 +745,7 @@ export function formatNativeDoctor(result: NativeDoctorResult): string {
       `${report.label}:`,
       `  supported on this host: ${report.supportedPlatform ? "yes" : "no"}`,
       `  backend diagnostics ready: ${report.ok ? "yes" : "no"}`,
-      `  helper available: ${report.helper?.status === "available" ? "yes" : "no"}`,
+      `  helper available: ${readinessLabel(helperReadiness(report.helper))}`,
       `  ready: ${readinessLabel(report.ready)}`,
       "",
       indent(
