@@ -14,8 +14,16 @@ import {
   resolveProfile,
 } from "@opencontroller/core";
 import type { ServerWebSocket } from "bun";
+import {
+  createLocalPolicyRandom,
+  decideLocally,
+  type FighterAction,
+  localPolicyRngVersion,
+  type PlayerId,
+  type PolicyRandom,
+  parseLocalPolicySeed,
+} from "./local-policy";
 
-type PlayerId = "player-1" | "player-2";
 type ClientKind = "game" | "controller";
 type SocketData = {
   kind: ClientKind;
@@ -51,16 +59,6 @@ type ArenaSnapshot = {
   }>;
   projectiles: Array<{ ownerId: PlayerId; x: number; y: number; vx: number }>;
 };
-type FighterAction =
-  | "advance"
-  | "retreat"
-  | "jump"
-  | "light"
-  | "heavy"
-  | "block"
-  | "dash"
-  | "special"
-  | "neutral";
 type AgentRuntime = {
   id: PlayerId;
   controller: Controller;
@@ -96,6 +94,11 @@ type ManagementState = {
   openAiDecisionMs: number;
   agentTickMs: number;
   openAiEnabled: boolean;
+  localPolicy: {
+    randomSource: string;
+    seedScope: string;
+    seed?: number;
+  };
 };
 type ArenaSnapshotRow = { value: string };
 type RecentAgentEventRow = {
@@ -114,6 +117,13 @@ type RecentAgentEventRow = {
 };
 
 const playerIds = ["player-1", "player-2"] as const;
+const localPolicySeed = parseLocalPolicySeed(
+  Bun.env.OPENCONTROLLER_AGENT_FIGHTER_SEED,
+);
+const localPolicyRandoms: Record<PlayerId, PolicyRandom> = {
+  "player-1": createLocalPolicyRandom(localPolicySeed, "player-1"),
+  "player-2": createLocalPolicyRandom(localPolicySeed, "player-2"),
+};
 const publicDir = join(import.meta.dir, "src");
 const dataDir = join(import.meta.dir, "data");
 mkdirSync(dataDir, { recursive: true });
@@ -231,6 +241,12 @@ const managementState: ManagementState = {
   openAiDecisionMs,
   agentTickMs,
   openAiEnabled: Boolean(Bun.env.OPENAI_API_KEY),
+  localPolicy: {
+    randomSource:
+      localPolicySeed === undefined ? "Math.random" : localPolicyRngVersion,
+    seedScope: "local-policy-random-branches-only",
+    ...(localPolicySeed === undefined ? {} : { seed: localPolicySeed }),
+  },
 };
 
 for (const playerId of playerIds) {
@@ -1092,13 +1108,23 @@ async function decideAndAct(agent: AgentRuntime): Promise<void> {
         agent.history,
       );
     } else {
-      decision = decideLocallyWithRationale(agent.id, observation, "local");
+      decision = decideLocallyWithRationale(
+        agent.id,
+        observation,
+        "local",
+        localPolicyRandoms[agent.id],
+      );
     }
 
     if (!decision && Bun.env.OPENAI_API_KEY) {
       return;
     }
-    decision ??= decideLocallyWithRationale(agent.id, observation, "local");
+    decision ??= decideLocallyWithRationale(
+      agent.id,
+      observation,
+      "local",
+      localPolicyRandoms[agent.id],
+    );
     const controls = commandsForAction(agent.id, decision.action, observation);
     recordAgentDecision({
       ...decision,
@@ -1260,41 +1286,13 @@ function extractOutputText(payload: unknown): string {
   return chunks.join("");
 }
 
-function decideLocally(
-  playerId: PlayerId,
-  observation: ReturnType<typeof observationFor>,
-): FighterAction {
-  const me = observation.me;
-  const enemy = observation.enemy;
-  if (!me || !enemy || observation.mode !== "playing") {
-    return "neutral";
-  }
-  const distance = Math.abs(enemy.x - me.x);
-  const enemyAttacking = enemy.attacking;
-  if (me.hp < 28 && distance < 110 && enemyAttacking) {
-    return "block";
-  }
-  if (distance > 430) {
-    return "special";
-  }
-  if (distance > 150) {
-    return playerId === "player-1" ? "advance" : "dash";
-  }
-  if (enemyAttacking && distance < 120) {
-    return "retreat";
-  }
-  if (distance < 76) {
-    return Math.random() > 0.62 ? "heavy" : "light";
-  }
-  return Math.random() > 0.72 ? "jump" : "advance";
-}
-
 function decideLocallyWithRationale(
   playerId: PlayerId,
   observation: ReturnType<typeof observationFor>,
   source: DecisionSource,
+  random: PolicyRandom,
 ): DecisionResult {
-  const action = decideLocally(playerId, observation);
+  const action = decideLocally(playerId, observation, random);
   return {
     action,
     rationale: localRationale(action, observation, source),

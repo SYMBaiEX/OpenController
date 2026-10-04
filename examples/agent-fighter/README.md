@@ -43,6 +43,25 @@ catches broken controller connections without depending on combat outcomes. Use
 `--min-decisions`, `--min-decisions-per-player`, `--min-total-damage`, and
 `--min-rounds` for stronger local or CI regression checks.
 
+To seed local-policy randomness on a server started by the runner:
+
+```bash
+bun --cwd examples/agent-fighter headless --seed 42 --matches 3 --duration-ms 10000
+```
+
+The summary records the seed and RNG version under `localPolicy`. The seed
+affects only randomized local-policy decisions, not arena/browser randomness,
+timers, or OpenAI Responses API outcomes. For the same agent, seed, RNG/policy
+version, and observation sequence, the local decision sequence repeats. This
+does not make full matches repeatable because observations and timing can
+change. Recheck results after policy, RNG, runtime, or relevant configuration
+changes.
+
+`--seed` requires a runner-spawned server and is rejected with `--url`. For an
+external server, set `OPENCONTROLLER_AGENT_FIGHTER_SEED=42` before startup; the
+runner will mark that server's RNG as unknown and will not report a seed it did
+not control.
+
 Agents start stopped by default. Use the controller telemetry page to start,
 stop, or reset the duel. The server also enforces
 `OPENCONTROLLER_OPENAI_ACTIONS_PER_MINUTE` so an active browser cannot accidentally

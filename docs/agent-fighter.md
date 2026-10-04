@@ -36,6 +36,39 @@ default it fails if either player produces zero controller decisions; use
 `--min-decisions`, `--min-decisions-per-player`, `--min-total-damage`, and
 `--min-rounds` for stricter local or CI checks.
 
+## Seeded local-policy decisions
+
+Pass `--seed <uint32>` to seed the local policy when the headless runner starts
+the server:
+
+```bash
+bun --cwd examples/agent-fighter headless --seed 42 --matches 3 --duration-ms 10000
+```
+
+The JSON summary's `localPolicy` block records the seed and RNG version when
+the runner controls the spawned server. The seed changes only the local
+policy's randomized close-range and approach choices. It does not seed the
+arena, browser, timers, or OpenAI Responses API. If an OpenAI decision is used,
+its result is outside this seeded path.
+
+For the same agent, the same seed and RNG/policy version produce the same local
+decision sequence when given the same observation sequence. This does not
+promise a repeatable whole match: browser timing, simulation observations,
+runtime behavior, and software changes can alter that sequence. Recheck results
+when the policy, RNG version, Bun/runtime, or relevant configuration changes.
+
+`--seed` is rejected together with `--url`, because the runner cannot control
+an already-running server. To seed an external server, set the variable before
+starting it, then omit `--seed` from the runner command:
+
+```bash
+OPENCONTROLLER_AGENT_FIGHTER_SEED=42 bun --cwd examples/agent-fighter start
+bun --cwd examples/agent-fighter headless --url http://127.0.0.1:5173
+```
+
+When targeting an external server, the runner summary marks the local policy as
+external with an unknown random source and omits a seed it did not set.
+
 Agents start stopped by default. Start, stop, and reset controls live on the
 controller telemetry page. The OpenAI decision loop is also guarded by
 `OPENCONTROLLER_OPENAI_ACTIONS_PER_MINUTE` to prevent runaway action volume.
