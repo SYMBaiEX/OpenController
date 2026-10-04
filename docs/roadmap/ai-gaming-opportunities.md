@@ -1,6 +1,6 @@
 # OpenController AI and Gaming Opportunity Goal
 
-**Status:** Cycle 1 is merged to `main` as PRs #1–#4. Cycle 2 issues [#8](https://github.com/SYMBaiEX/OpenController/issues/8) and [#9](https://github.com/SYMBaiEX/OpenController/issues/9) were implemented and merged in [PR #12](https://github.com/SYMBaiEX/OpenController/pull/12) (`067fc591fe34e7d09cfdfedcf8db48fcd6a7c0d1`) and [PR #13](https://github.com/SYMBaiEX/OpenController/pull/13) (`5f7e6fc7054654f220a6cb45a4c438ae0d9e4ae7`); [#10](https://github.com/SYMBaiEX/OpenController/issues/10) remains deferred. The Cycle 3 research gate [#16](https://github.com/SYMBaiEX/OpenController/issues/16) selected [#14](https://github.com/SYMBaiEX/OpenController/issues/14) for a preventive CI-integrity slice; [#15](https://github.com/SYMBaiEX/OpenController/issues/15) is deferred outside the active milestone. Metric baselines remain deferred because the runner did not produce reliable outcomes, and Reddit/accessibility evidence gaps remain open.
+**Status:** Cycle 1 is merged to `main` as PRs #1–#4. Cycle 2 issues [#8](https://github.com/SYMBaiEX/OpenController/issues/8) and [#9](https://github.com/SYMBaiEX/OpenController/issues/9) were implemented and merged in [PR #12](https://github.com/SYMBaiEX/OpenController/pull/12) (`067fc591fe34e7d09cfdfedcf8db48fcd6a7c0d1`) and [PR #13](https://github.com/SYMBaiEX/OpenController/pull/13) (`5f7e6fc7054654f220a6cb45a4c438ae0d9e4ae7`); [#10](https://github.com/SYMBaiEX/OpenController/issues/10) remains deferred. Cycle 3 selected [#14](https://github.com/SYMBaiEX/OpenController/issues/14), which is implemented in [PR #19](https://github.com/SYMBaiEX/OpenController/pull/19) (`f2baa6b297f05c20b065baab196cce8d6a725bdc`); [#15](https://github.com/SYMBaiEX/OpenController/issues/15) remains deferred. Cycle 4 research gate [#23](https://github.com/SYMBaiEX/OpenController/issues/23) tracks candidates [#20](https://github.com/SYMBaiEX/OpenController/issues/20)–[#22](https://github.com/SYMBaiEX/OpenController/issues/22). Metric baselines remain unselected pending deterministic-scenario evidence, and Reddit/accessibility source gaps remain open.
 
 ## Product goal
 
@@ -231,7 +231,7 @@ The Cycle 2 source log remains a targeted sample, not a market survey or prevale
 
 ## Cycle 3 — research decision (2026-10-04)
 
-The research and ranking gate in [issue #16](https://github.com/SYMBaiEX/OpenController/issues/16) is complete. It selected [#14 — keep key SDK documentation examples runnable](https://github.com/SYMBaiEX/OpenController/issues/14) for a bounded, preventive CI-integrity slice, and deferred [#15 — make Agent Fighter keyboard bindings configurable](https://github.com/SYMBaiEX/OpenController/issues/15) outside the active milestone. This is a research selection; #14 is not yet implemented.
+The research and ranking gate in [issue #16](https://github.com/SYMBaiEX/OpenController/issues/16) selected [#14 — keep key SDK documentation examples runnable](https://github.com/SYMBaiEX/OpenController/issues/14) for a bounded, preventive CI-integrity slice, and deferred [#15 — make Agent Fighter keyboard bindings configurable](https://github.com/SYMBaiEX/OpenController/issues/15) outside the active milestone. PR #19 implemented the selected slice and merged it to `main`.
 
 ### Refreshed evidence and limits
 
@@ -260,10 +260,30 @@ flowchart TD
   B[Audit current repository behavior and test coverage] --> C
   C --> D[Implement issue #14: executable dry-run documentation checks]
   D --> E[Independent review and focused/integrated validation]
-  E --> F[Open implementation PR against current main]
-  F --> G[Merge after review and required checks pass]
-  C -. deferred outside active milestone .-> H[Issue #15: configurable Agent Fighter keyboard bindings]
+  E --> F[PR #19 merged to main]
+  F --> G[Update roadmap and open Cycle 4 gate #23]
+  G --> H[Close Cycle 3 gate #16]
+  H --> I[Unblock Cycle 4 research gate #23]
+  C -. deferred outside active milestone .-> J[Issue #15: configurable Agent Fighter keyboard bindings]
 ```
+
+### Cycle 3 implementation closeout (2026-10-04)
+
+PR [#19](https://github.com/SYMBaiEX/OpenController/pull/19) merged as merge commit `f2baa6b297f05c20b065baab196cce8d6a725bdc`; GitHub closed issue #14. The Getting Started dry-run and AI action-map docs now link to the same runnable TypeScript sources that CI executes. The check also covers the basic dry-run example, observable state and replay intents, neutralization, and disconnect. A dedicated TypeScript project brings all of these examples into the root `tsc -b` check. Default replay output uses a unique directory per run.
+
+An independent review caught the fixed-directory replay append issue and the missing TypeScript project coverage before merge; both were corrected. The final review found no blocker. The automated coverage validates the SDK dry-run path only; it does not validate native drivers, OBS, physical hardware, operating systems, Steam, or game behavior.
+
+Integrated validation on `main` after the merge passed: Biome checked 144 files; TypeScript project build passed; 162 tests passed with 0 failures and 1,170 assertions; all 9 Turbo build targets succeeded; audit found no vulnerabilities in 90 packages; package packing passed for all 7 publishable packages; `check:dry-run-examples` passed; and `git diff --check` passed. Issue #15 remains deferred.
+
+### Cycle 4 research gate and candidate backlog
+
+The next research goal is [issue #23](https://github.com/SYMBaiEX/OpenController/issues/23), in milestone 3. It is currently blocked by Cycle 3 gate #16; closing #16 after this roadmap closeout will unblock Cycle 4. Candidate issues [#20](https://github.com/SYMBaiEX/OpenController/issues/20) (native-test failure cleanup), [#21](https://github.com/SYMBaiEX/OpenController/issues/21) (tested versus unverified host/game compatibility), and [#22](https://github.com/SYMBaiEX/OpenController/issues/22) (seeded Agent Fighter local-policy evaluation) wait on the Cycle 4 research gate. None is selected for implementation.
+
+The initial ranking favors #22 because it has a direct repository gap and aligns with repeatable agent-evaluation workflows, but browser/game timing may prevent stable outcomes. #20 has a bounded first-party failure-path question. #21 may help users distinguish SDK protocol checks from host/game validation, but must not duplicate existing profile conformance or native doctor/test coverage. The gate may reorder or reject all candidates after auditing current code. #10 and #15 remain deferred.
+
+The 2026-10-04 source refresh reviewed targeted reports from GitHub, Steam for Linux, OpenAI Developer Community, Hacker News, and adjacent game-agent projects. It found individual reports about cross-layer controller mapping, host/game forwarding, deterministic game-agent traces, and benchmark seed corpora. These are evidence seeds, not prevalence estimates. Reddit returned HTTP 403; Steam Community search returned no verifiable dated result. Full source notes, ranking limits, and acceptance criteria are recorded in issue #23 and candidate issues #20–#22.
+
+**GitHub Projects tracking:** a Project V2 could not be created because the connected GitHub integration returned `Resource not accessible by integration` for `createProjectV2`. Until the integration has Projects write access, track work in milestone 3 and the native blocked-by DAG; no GitHub Project has been created.
 
 ## Branch and swarm operating rules
 
