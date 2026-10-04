@@ -219,11 +219,11 @@ flowchart TD
   R -. exploratory, deferred .-> C[#10 macOS physical gamepad input for OBS]
   A --> D[Independent review and integration]
   B --> D
-  D --> E[Stacked PR merges in dependency order]
+  D --> E[Merge both feature PRs in either order]
   E --> F[Next cycle]
 ```
 
-**PR dependency:** this research decision is the documentation gate for implementation PRs #8 and #9. Build branches should be based on the reviewed/merged research branch, with #8 first and #9 second in the stack; do not merge implementation PRs before this decision is reviewed. Issue #7 is the research gate and #5 is the umbrella.
+**PR dependency:** research PR #11 is the shared parent and review gate for the two independent feature slices tracked by issues [#8](https://github.com/SYMBaiEX/OpenController/issues/8) and [#9](https://github.com/SYMBaiEX/OpenController/issues/9). Their feature PRs may be opened as children of #11, then retargeted or rebased onto `main` after #11 merges. They can be reviewed and merged in either order; neither feature depends on the other. Issue #7 is the research gate and #5 is the umbrella.
 
 ## Next cycle
 
