@@ -1,6 +1,6 @@
 # OpenController AI and Gaming Opportunity Goal
 
-**Status:** Cycle 1 is merged to `main` as PRs #1–#4. The post-merge release check passes. Metric baselines remain deferred because the runner did not produce reliable outcomes, and the Reddit/accessibility evidence gaps remain open. Cycle 2 research is documented below; implementation selection is underway under [umbrella issue #5](https://github.com/SYMBaiEX/OpenController/issues/5) and research gate [#7](https://github.com/SYMBaiEX/OpenController/issues/7). No Cycle 2 code has merged.
+**Status:** Cycle 1 is merged to `main` as PRs #1–#4. Cycle 2 issues [#8](https://github.com/SYMBaiEX/OpenController/issues/8) and [#9](https://github.com/SYMBaiEX/OpenController/issues/9) were implemented and merged in [PR #12](https://github.com/SYMBaiEX/OpenController/pull/12) (`067fc591fe34e7d09cfdfedcf8db48fcd6a7c0d1`) and [PR #13](https://github.com/SYMBaiEX/OpenController/pull/13) (`5f7e6fc7054654f220a6cb45a4c438ae0d9e4ae7`); [#10](https://github.com/SYMBaiEX/OpenController/issues/10) remains deferred. Cycle 3 research is gated by [issue #16](https://github.com/SYMBaiEX/OpenController/issues/16), with candidate issues [#14](https://github.com/SYMBaiEX/OpenController/issues/14) and [#15](https://github.com/SYMBaiEX/OpenController/issues/15) deferred pending that gate. Metric baselines remain deferred because the runner did not produce reliable outcomes, and Reddit/accessibility evidence gaps remain open.
 
 ## Product goal
 
@@ -190,7 +190,7 @@ The attempted `feat/fighter-regression-baselines` branch was reset to the DAG
 parent and excluded because its measurements were not a trustworthy regression
 signal. It remains a deferred backlog item.
 
-## Cycle 2 — research decision
+## Cycle 2 — research decision and closeout
 
 Research gate [#7](https://github.com/SYMBaiEX/OpenController/issues/7) records the decision for umbrella [#5](https://github.com/SYMBaiEX/OpenController/issues/5). The source log below is a targeted sample of dated reports, not a market survey or prevalence estimate. A zero comment/reaction count is only an engagement snapshot. Evidence identifies debugging and conformance failure modes; it does not establish how often OpenController users encounter them. Reddit still returns HTTP 403, so direct disabled-gamer/accessibility community coverage is missing. Hacker News and general source searches were noisy and launch-oriented; enthusiasm is not counted as pain evidence.
 
@@ -214,24 +214,24 @@ Lifecycle recovery remains deferred because ownership is largely upstream. Acces
 
 ```mermaid
 flowchart TD
-  R[Research decision: issue #7] --> A[Selected build: #8 replay command error context]
-  R --> B[Selected build: #9 profile-to-report conformance matrix]
+  R[Research decision: issue #7] --> A[#8 replay command error context]
+  R --> B[#9 profile-to-report conformance matrix]
   R -. exploratory, deferred .-> C[#10 macOS physical gamepad input for OBS]
   A --> D[Independent review and integration]
   B --> D
-  D --> E[Merge both feature PRs in either order]
-  E --> F[Next cycle]
+  D --> E[PR #12 and PR #13 merged to main]
+  E --> F[Cycle 3 research gate: issue #16]
 ```
 
-**PR dependency:** research PR #11 is the shared parent and review gate for the two independent feature slices tracked by issues [#8](https://github.com/SYMBaiEX/OpenController/issues/8) and [#9](https://github.com/SYMBaiEX/OpenController/issues/9). Their feature PRs may be opened as children of #11, then retargeted or rebased onto `main` after #11 merges. They can be reviewed and merged in either order; neither feature depends on the other. Issue #7 is the research gate and #5 is the umbrella.
+**Implementation closeout:** research PR #11 recorded the gate for the two independent feature slices. Issue #8 was implemented and merged by [PR #12](https://github.com/SYMBaiEX/OpenController/pull/12) at merge commit `067fc591fe34e7d09cfdfedcf8db48fcd6a7c0d1`; issue #9 was implemented and merged by [PR #13](https://github.com/SYMBaiEX/OpenController/pull/13) at merge commit `5f7e6fc7054654f220a6cb45a4c438ae0d9e4ae7`. The PRs were merged to `main`; issue #10 remains deferred pending stronger direct evidence and API/permission feasibility review.
 
-## Next cycle
+Post-merge validation on the combined `main` state: lint checked 140 files; typecheck passed; 162 tests passed with 0 failures and 1,170 assertions; all 9 Turbo build tasks succeeded; audit checked 90 packages with no vulnerabilities; package packing passed for all 7 publishable workspace packages. These checks validate repository behavior and packaging, not SDL/Steam, host/driver, physical-device, or game behavior described in the source evidence.
 
-[Issue #5](https://github.com/SYMBaiEX/OpenController/issues/5) begins Cycle 2.
-It uses a one-cycle DAG for refresh research, evidence ranking, bounded scope,
-implementation, independent review, stacked PRs, ordered merges, and opening the
-next cycle issue. Its first hypothesis is controller compatibility/conformance;
-the issue requires refreshed evidence before implementation is selected.
+The Cycle 2 source log remains a targeted sample, not a market survey or prevalence estimate. Its Reddit/accessibility coverage gaps and upstream ownership limits remain in force.
+
+## Cycle 3 — research gate
+
+[Issue #16](https://github.com/SYMBaiEX/OpenController/issues/16) is the research and ranking gate for Cycle 3. Candidate [#14 — keep key SDK documentation examples runnable](https://github.com/SYMBaiEX/OpenController/issues/14) is deferred pending that gate; its single FLE report shows a concrete failure mode in another project, not an OpenController documentation defect. Candidate [#15 — make Agent Fighter keyboard bindings configurable](https://github.com/SYMBaiEX/OpenController/issues/15) is exploratory and deferred pending that gate; its single report concerns a different demo, and the current Agent Fighter already supports arrow-key movement for player two. Neither issue is build approval. Refresh the evidence and assess repository fit before selecting either; a no-build decision remains valid.
 
 ## Branch and swarm operating rules
 
