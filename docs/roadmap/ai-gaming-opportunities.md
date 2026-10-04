@@ -1,6 +1,6 @@
 # OpenController AI and Gaming Opportunity Goal
 
-**Status:** targeted source sweep complete with documented coverage gaps. Replay export and native readiness are implemented on separate branches; metric baselines are deferred after the runner failed to produce reliable metrics. Integrated review remains pending.
+**Status:** targeted source sweep complete with documented coverage gaps. Replay export and native readiness are implemented on separate branches; independent review findings were fixed, and the integrated release checks pass. Metric baselines are deferred after the runner failed to produce reliable metrics. Stacked PRs are prepared in dependency order; none have been merged.
 
 ## Product goal
 
@@ -130,8 +130,31 @@ Future acceptance criteria:
 - [x] Re-rank the backlog from observed reports, project fit, cost, and risk; defer weakly supported or upstream-owned work.
 - [ ] Revisit accessibility and Reddit-specific pain points if those communities become reachable; current feature slices do not depend on this gap.
 - [x] Run focused tests/build/format checks for replay export and native readiness on their owned branches.
-- [ ] Independently review both slices and run integrated release checks.
-- [ ] Prepare small, meaningful stacked PRs with evidence, dependency order, acceptance criteria, and exact validation; do not merge without explicit authorization.
+- [x] Independently review both slices, resolve findings, and review the fixes.
+- [x] Run integrated release checks on the combined feature branches.
+- [x] Prepare meaningful stacked PRs with evidence, dependency order, acceptance criteria, and exact validation; do not merge without explicit authorization.
+
+### Integrated review and validation
+
+An independent review identified three issues before integration: readiness
+could overstate unverified Windows/macOS driver state, Windows elevation/signing
+were presented as known requirements, and CSV cells could trigger spreadsheet
+formulas. The feature branches were corrected, and the reviewer confirmed all
+three findings resolved with no new blockers. A separate review of the Bun,
+TypeScript, and package upgrade found no correctness, security, or CI blockers.
+
+At the combined feature tip, `bun install --frozen-lockfile` and
+`bun run release:check` passed:
+
+- Biome checked 139 files with no fixes needed; `tsc -b` passed.
+- 151 tests passed, with 0 failures and 1,000 assertions.
+- All 9 Turbo build targets succeeded.
+- `bun audit` found no vulnerabilities in 90 packages.
+- Package packing passed for all 7 publishable workspace packages.
+
+Windows VHF driver installation/signing and macOS DriverKit activation are
+still not probed by the current native doctor, so their readiness remains
+`unknown` when those checks cannot be verified.
 
 ## Work DAG
 
@@ -145,7 +168,7 @@ flowchart TD
   F --> G[Future: stabilize scenario and telemetry outcomes]
   D --> H[Per-slice review and focused checks]
   E --> H
-  H --> I[Integrated code review and release checks]
+  H --> I[Integrated independent review and release checks]
   I --> J[Prepare stacked PRs]
 ```
 
