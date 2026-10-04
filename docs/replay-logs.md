@@ -65,4 +65,7 @@ line number. The input and output paths must differ.
 CSV columns, in order: `timestamp`, `type`, `controllerId`, `profile`, `label`,
 `command`, `stateBefore`, `stateAfter`, `state`, `feedback`, `error`, `intent`,
 `source`, `data`, and `event_json`. Commas, quotes, and line breaks are escaped
-using standard CSV quoting.
+using standard CSV quoting. For spreadsheet safety, CSV cells whose text starts
+with `=`, `+`, `-`, or `@`, including after whitespace or control characters,
+are prefixed with an apostrophe. This changes only the presentation cell;
+`event_json` retains the original event values for lossless import and analysis.

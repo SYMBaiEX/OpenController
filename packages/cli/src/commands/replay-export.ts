@@ -216,8 +216,29 @@ function parseReplayEvent(
 
 function csvCell(value: unknown): string {
   if (value === undefined || value === null) return "";
-  const text = typeof value === "string" ? value : JSON.stringify(value);
+  const original = typeof value === "string" ? value : JSON.stringify(value);
+  // Prefix formula-like text with an apostrophe for spreadsheet presentation.
+  // The full unmodified event remains available in the event_json column.
+  const text = isFormulaLike(original) ? `'${original}` : original;
   return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+}
+
+function isFormulaLike(value: string): boolean {
+  let index = 0;
+  while (index < value.length) {
+    const character = value[index] ?? "";
+    const code = character.charCodeAt(0);
+    if (
+      /\s/.test(character) ||
+      code <= 0x20 ||
+      (code >= 0x7f && code <= 0x9f)
+    ) {
+      index += 1;
+      continue;
+    }
+    return "=+-@".includes(character);
+  }
+  return false;
 }
 
 async function write(output: Writable, chunk: string): Promise<void> {

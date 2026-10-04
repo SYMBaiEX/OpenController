@@ -153,4 +153,56 @@ describe("replay export", () => {
       await rm(directory, { recursive: true, force: true });
     }
   });
+
+  test("escapes spreadsheet formula-like CSV cells and preserves original events", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "opencontroller-replay-"));
+    const input = join(directory, "events.jsonl");
+    const output = join(directory, "events.csv");
+    const event = {
+      type: "annotation",
+      timestamp: -42,
+      label: " \t=1+1",
+      source: "\u0001@SUM(A1:A2)",
+      profile: "+cmd|' /C calc'!A0",
+    };
+
+    try {
+      await writeFile(input, `${JSON.stringify(event)}\n`);
+      await exportReplay(input, { format: "csv", output });
+      const [header, row] = (await readFile(output, "utf8")).split("\n");
+      const columns = parseCsvLine(header ?? "");
+      const values = parseCsvLine(row ?? "");
+      const cell = (column: string) => values[columns.indexOf(column)];
+
+      expect(cell("timestamp")).toBe("'-42");
+      expect(cell("label")).toBe("' \t=1+1");
+      expect(cell("source")).toBe("'\u0001@SUM(A1:A2)");
+      expect(cell("profile")).toBe("'+cmd|' /C calc'!A0");
+      expect(JSON.parse(cell("event_json") ?? "null")).toEqual(event);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
 });
+
+function parseCsvLine(line: string): string[] {
+  const cells: string[] = [];
+  let cell = "";
+  let quoted = false;
+  for (let index = 0; index < line.length; index += 1) {
+    const character = line[index];
+    if (quoted && character === '"' && line[index + 1] === '"') {
+      cell += '"';
+      index += 1;
+    } else if (character === '"') {
+      quoted = !quoted;
+    } else if (character === "," && !quoted) {
+      cells.push(cell);
+      cell = "";
+    } else {
+      cell += character;
+    }
+  }
+  cells.push(cell);
+  return cells;
+}
