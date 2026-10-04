@@ -2523,10 +2523,6 @@ describe("controller runtime", () => {
       result.status === "fulfilled" ? [result.value] : [],
     );
 
-    await Promise.all(
-      createdControllers.map((controller) => controller.disconnect()),
-    );
-
     expect(results[0]?.status).toBe("fulfilled");
     expect(results[1]?.status).toBe("rejected");
     if (results[1]?.status === "rejected") {
@@ -2534,6 +2530,10 @@ describe("controller runtime", () => {
         message: "Controller concurrent-player already exists",
       });
     }
+    expect(createdControllers).toHaveLength(1);
+    expect(hub.get(options.id)).toBe(createdControllers[0]);
+
+    await hub.disconnectAll();
   });
 
   test("releases a reserved hub ID when controller creation fails", async () => {

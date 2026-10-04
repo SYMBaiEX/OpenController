@@ -17,4 +17,5 @@ await hub.add({
 
 await hub.get("player-1").press("A", 80);
 await hub.get("player-2").press("B", 80);
+// Await every in-flight hub.add() before disconnecting registered controllers.
 await hub.disconnectAll();

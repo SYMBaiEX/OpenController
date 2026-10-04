@@ -70,8 +70,9 @@ await hub.disconnectAll();
 
 Hub IDs are caller-assigned logical identifiers for controllers in this hub.
 They do not identify physical devices or host/browser slots. Use `hub.get(id)`
-to retrieve an added controller; `hub.disconnectAll()` disconnects every
-controller and clears the hub so those IDs can be added again.
+to retrieve an added controller. Await every in-flight `hub.add()` before
+calling `hub.disconnectAll()`: it disconnects the controllers currently
+registered with the hub and clears those IDs so they can be added again.
 
 ## Analog Button Pressure
 
