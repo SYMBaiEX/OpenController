@@ -219,7 +219,7 @@ function toJsonSafe(
         }
       });
     }
-    const result: Record<string, unknown> = {};
+    const result = Object.create(null) as Record<string, unknown>;
     for (const key of Object.keys(value)) {
       try {
         result[key] = toJsonSafe(Reflect.get(value, key), seen, depth + 1);

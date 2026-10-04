@@ -2241,7 +2241,10 @@ describe("controller runtime", () => {
     const dir = await mkdtemp(join(tmpdir(), "opencontroller-error-replay-"));
     cleanupDirs.push(dir);
     const adapter = new DryRunAdapter();
-    const failure: Record<string, unknown> = { code: 17n };
+    const failure: Record<string, unknown> = JSON.parse(
+      '{"__proto__":{"x":1}}',
+    );
+    failure.code = 17n;
     failure.self = failure;
     adapter.send = async () => {
       throw failure;
@@ -2262,6 +2265,8 @@ describe("controller runtime", () => {
       error: "[object Object]",
       errorDetails: { code: "17n", self: "[circular]" },
     });
+    expect(Object.hasOwn(event.errorDetails, "__proto__")).toBe(true);
+    expect(JSON.stringify(event.errorDetails)).toContain('"__proto__":{"x":1}');
     const legacyFixture = JSON.parse(
       '{"type":"error","timestamp":1,"controllerId":"old","error":"legacy failure","command":{"type":"press","button":"CROSS"}}',
     );
