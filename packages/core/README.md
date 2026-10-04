@@ -51,20 +51,20 @@ import { createControllerHub } from "@opencontroller/core";
 
 const hub = await createControllerHub();
 
-const playerOne = await hub.add({
+await hub.add({
   id: "player-1",
   profile: "xbox",
   adapter: "dry-run",
 });
 
-const playerTwo = await hub.add({
+await hub.add({
   id: "player-2",
   profile: "xbox",
   adapter: "dry-run",
 });
 
-await playerOne.press("A", 80);
-await playerTwo.press("B", 80);
+await hub.get("player-1").press("A", 80);
+await hub.get("player-2").press("B", 80);
 await hub.disconnectAll();
 ```
 

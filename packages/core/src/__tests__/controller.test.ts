@@ -2461,13 +2461,23 @@ describe("controller runtime", () => {
       ],
     });
 
-    await hub.get("player-1").press("A", 5);
-    await hub.get("player-2").press("X", 5);
+    const playerOne = hub.get("player-1");
+    const playerTwo = hub.get("player-2");
+
+    await playerOne.setButton("A", true);
+    expect(playerOne.getState().buttons.A).toBe(true);
+    expect(playerTwo.getState().buttons.A).toBe(false);
+
+    await playerTwo.setButton("X", true);
+    expect(playerTwo.getState().buttons.X).toBe(true);
+    expect(playerOne.getState().buttons.X).toBe(false);
 
     expect(hub.list()).toEqual(["player-1", "player-2"]);
     expect(hub.states()["player-1"]?.profile).toBe("xbox");
     expect(hub.states()["player-2"]?.profile).toBe("xbox");
 
+    await playerOne.setButton("A", false);
+    await playerTwo.setButton("X", false);
     await hub.disconnectAll();
   });
 
@@ -2493,6 +2503,54 @@ describe("controller runtime", () => {
     expect(hub.get(options.id)).toBe(reused);
     expect(reused).not.toBe(first);
 
+    await hub.disconnectAll();
+  });
+
+  test("reserves hub IDs while controller creation is pending", async () => {
+    const hub = await createControllerHub();
+    const options = {
+      id: "concurrent-player",
+      profile: "xbox" as const,
+      adapter: "dry-run" as const,
+      replay: false,
+    };
+
+    const results = await Promise.allSettled([
+      hub.add(options),
+      hub.add(options),
+    ]);
+    const createdControllers = results.flatMap((result) =>
+      result.status === "fulfilled" ? [result.value] : [],
+    );
+
+    await Promise.all(
+      createdControllers.map((controller) => controller.disconnect()),
+    );
+
+    expect(results[0]?.status).toBe("fulfilled");
+    expect(results[1]?.status).toBe("rejected");
+    if (results[1]?.status === "rejected") {
+      expect(results[1].reason).toMatchObject({
+        message: "Controller concurrent-player already exists",
+      });
+    }
+  });
+
+  test("releases a reserved hub ID when controller creation fails", async () => {
+    const hub = await createControllerHub();
+    const options = {
+      id: "retry-after-failure",
+      profile: "xbox" as const,
+      adapter: "websocket" as const,
+      replay: false,
+    };
+
+    await expect(hub.add(options)).rejects.toThrow(
+      "WebSocket adapter requires a url option",
+    );
+
+    const controller = await hub.add({ ...options, adapter: "dry-run" });
+    expect(hub.get(options.id)).toBe(controller);
     await hub.disconnectAll();
   });
 });

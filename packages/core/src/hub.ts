@@ -11,15 +11,21 @@ export type ControllerHubOptions = {
 
 export class ControllerHub {
   private readonly controllers = new Map<string, Controller>();
+  private readonly pendingIds = new Set<string>();
 
   async add(options: ControllerHubEntry): Promise<Controller> {
-    if (this.controllers.has(options.id)) {
+    if (this.controllers.has(options.id) || this.pendingIds.has(options.id)) {
       throw new Error(`Controller ${options.id} already exists`);
     }
 
-    const controller = await createController(options);
-    this.controllers.set(options.id, controller);
-    return controller;
+    this.pendingIds.add(options.id);
+    try {
+      const controller = await createController(options);
+      this.controllers.set(options.id, controller);
+      return controller;
+    } finally {
+      this.pendingIds.delete(options.id);
+    }
   }
 
   get(id: string): Controller {
