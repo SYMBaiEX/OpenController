@@ -3,13 +3,7 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
-    "composite": true,
-    "baseUrl": "../..",
-    "paths": {
-      "@opencontroller/core": ["packages/core/src/index.ts"],
-      "@opencontroller/core/*": ["packages/core/src/*"],
-      "@opencontroller/core/browser": ["packages/core/src/browser.ts"]
-    }
+    "composite": true
   },
   "include": ["src"],
   "references": [

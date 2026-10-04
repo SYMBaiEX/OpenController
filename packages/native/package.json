@@ -29,7 +29,11 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "rm -rf dist tsconfig.tsbuildinfo && tsc -p tsconfig.json && node ../../scripts/fix-esm-extensions.mjs dist",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -45,7 +49,7 @@
     "@opencontroller/native-windows-virtual-gamepad": "^0.1.14"
   },
   "devDependencies": {
-    "@types/bun": "^1.2.15",
-    "typescript": "^5.8.3"
+    "@types/bun": "^1.4.2",
+    "typescript": "^7.0.2"
   }
 }

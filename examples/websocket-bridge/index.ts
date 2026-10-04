@@ -2,10 +2,17 @@ import { createController } from "@opencontroller/core";
 
 const server = Bun.serve({
   port: 7777,
-  fetch(request, serverInstance) {
-    if (serverInstance.upgrade(request)) {
-      return undefined;
-    }
+  routes: {
+    "/controller": {
+      GET: (request, serverInstance) => {
+        if (serverInstance.upgrade(request)) {
+          return undefined;
+        }
+        return new Response("WebSocket upgrade failed", { status: 400 });
+      },
+    },
+  },
+  fetch() {
     return new Response(
       "OpenController WebSocket bridge listening on ws://localhost:7777/controller",
     );

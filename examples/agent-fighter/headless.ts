@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { type Browser, type Page, chromium } from "playwright";
+import { type Browser, chromium, type Page } from "playwright";
 
 type PlayerId = "player-1" | "player-2";
 

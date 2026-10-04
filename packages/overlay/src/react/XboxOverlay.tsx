@@ -1,11 +1,11 @@
 import {
+  analogValue,
   ConnectionDot,
   ControlCircle,
+  isPressed,
   type OverlayCommonProps,
   Stick,
   TriggerBar,
-  analogValue,
-  isPressed,
 } from "./shared";
 
 export function XboxOverlay(props: OverlayCommonProps) {

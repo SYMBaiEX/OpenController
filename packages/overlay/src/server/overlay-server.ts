@@ -38,24 +38,36 @@ export async function createOverlayServer(
   const server = Bun.serve({
     port: options.port ?? 4317,
     hostname: options.host ?? "127.0.0.1",
-    fetch(request, serverInstance) {
-      const url = new URL(request.url);
-      if (url.pathname === "/ws") {
-        if (serverInstance.upgrade(request)) {
-          return undefined;
-        }
-        return new Response("WebSocket upgrade failed", { status: 400 });
-      }
-      if (url.pathname === "/state") {
-        return Response.json(state);
-      }
-      if (url.pathname === "/" || url.pathname === "/overlay") {
-        return new Response(renderOverlayHtml(state, theme), {
-          headers: {
-            "content-type": "text/html; charset=utf-8",
-          },
-        });
-      }
+    routes: {
+      "/ws": {
+        GET: (request, serverInstance) => {
+          if (serverInstance.upgrade(request)) {
+            return undefined;
+          }
+          return new Response("WebSocket upgrade failed", { status: 400 });
+        },
+      },
+      "/state": {
+        GET: () => Response.json(state),
+      },
+      "/": {
+        GET: () =>
+          new Response(renderOverlayHtml(state, theme), {
+            headers: {
+              "content-type": "text/html; charset=utf-8",
+            },
+          }),
+      },
+      "/overlay": {
+        GET: () =>
+          new Response(renderOverlayHtml(state, theme), {
+            headers: {
+              "content-type": "text/html; charset=utf-8",
+            },
+          }),
+      },
+    },
+    fetch() {
       return new Response("Not found", { status: 404 });
     },
     websocket: {

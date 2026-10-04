@@ -5,14 +5,14 @@ import {
 } from "@opencontroller/core";
 
 export type TestCommandOptions = {
-  profile?: string;
-  adapter?: string;
+  profile?: ControllerProfileName;
+  adapter?: AdapterName;
   url?: string;
 };
 
 export async function testCommand(options: TestCommandOptions): Promise<void> {
-  const profile = (options.profile ?? "xbox") as ControllerProfileName;
-  const adapter = (options.adapter ?? "dry-run") as AdapterName;
+  const profile = options.profile ?? "xbox";
+  const adapter = options.adapter ?? "dry-run";
 
   const controller = await createController({
     profile,

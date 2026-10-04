@@ -1,6 +1,5 @@
 #!/usr/bin/env bun
 import {
-  type MacosDriverKitReportProfile,
   createMacosDriverKitAssetManifest,
   createMacosDriverKitDriverHeader,
   createMacosDriverKitDriverSource,
@@ -10,6 +9,7 @@ import {
   formatMacosDriverKitHidDescriptorForCpp,
   formatMacosDriverKitPlayStationHidDescriptorForCpp,
   formatMacosDriverKitSwitchHidDescriptorForCpp,
+  type MacosDriverKitReportProfile,
 } from "../driverkit";
 
 const args = new Set(process.argv.slice(2));

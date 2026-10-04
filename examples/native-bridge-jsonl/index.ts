@@ -1,4 +1,4 @@
-import { NativeBridgeAdapter, createController } from "@opencontroller/core";
+import { createController, NativeBridgeAdapter } from "@opencontroller/core";
 
 const lines: string[] = [];
 const adapter = new NativeBridgeAdapter({

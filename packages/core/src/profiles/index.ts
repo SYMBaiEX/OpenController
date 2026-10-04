@@ -634,9 +634,9 @@ function universalStatePatch(
   return Object.keys(universal).length > 0 ? universal : undefined;
 }
 
-export * from "./universal";
-export * from "./xbox";
-export * from "./playstation";
-export * from "./switch";
 export * from "./generic-hid";
 export * from "./keyboard-mouse";
+export * from "./playstation";
+export * from "./switch";
+export * from "./universal";
+export * from "./xbox";

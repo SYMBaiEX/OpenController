@@ -152,7 +152,8 @@ export function App() {
     <main>
       <section className="surface" aria-label="OpenController controller lab">
         <div className="toolbar">
-          <div className="tabs" aria-label="Controller profile">
+          <fieldset className="tabs">
+            <legend className="visuallyHidden">Controller profile</legend>
             {visualProfiles.map((item) => (
               <button
                 className={item === profile ? "tab active" : "tab"}
@@ -163,7 +164,7 @@ export function App() {
                 {item}
               </button>
             ))}
-          </div>
+          </fieldset>
           <button
             className={state.connected ? "status connected" : "status"}
             onClick={() => setConnected(!state.connected)}
@@ -184,7 +185,7 @@ export function App() {
             />
           </div>
 
-          <div className="controls" aria-label="Controller input controls">
+          <div className="controls">
             <ControlGroup title="Face">
               <ButtonGrid>
                 {controls.face.map((button) => (

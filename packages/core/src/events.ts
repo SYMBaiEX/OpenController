@@ -3,7 +3,7 @@ export type Unsubscribe = () => void;
 export class EventEmitter<TEvents extends Record<string, unknown>> {
   private readonly listeners = new Map<
     keyof TEvents,
-    Set<(event: unknown) => void>
+    Set<(...args: never[]) => unknown>
   >();
 
   on<TKey extends keyof TEvents>(
@@ -11,12 +11,12 @@ export class EventEmitter<TEvents extends Record<string, unknown>> {
     listener: (event: TEvents[TKey]) => void,
   ): Unsubscribe {
     const listeners =
-      this.listeners.get(eventName) ?? new Set<(event: unknown) => void>();
-    listeners.add(listener as (event: unknown) => void);
+      this.listeners.get(eventName) ?? new Set<(...args: never[]) => unknown>();
+    listeners.add(listener as (...args: never[]) => unknown);
     this.listeners.set(eventName, listeners);
 
     return () => {
-      listeners.delete(listener as (event: unknown) => void);
+      listeners.delete(listener as (...args: never[]) => unknown);
       if (listeners.size === 0) {
         this.listeners.delete(eventName);
       }
@@ -33,7 +33,7 @@ export class EventEmitter<TEvents extends Record<string, unknown>> {
     }
 
     for (const listener of [...listeners]) {
-      listener(event);
+      (listener as (event: TEvents[TKey]) => void)(event);
     }
   }
 

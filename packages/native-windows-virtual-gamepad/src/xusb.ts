@@ -1,9 +1,9 @@
 import type { NativeBridgeStateMessage } from "@opencontroller/core/bridge";
 import { nativeBridgeMessageToReportBytes } from "@opencontroller/core/bridge";
 import {
-  type XInputGamepadReport,
   decodeXInputReport,
   encodeXInputReport,
+  type XInputGamepadReport,
 } from "@opencontroller/core/hid";
 
 export type WindowsXusbReport = XInputGamepadReport;

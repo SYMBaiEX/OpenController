@@ -1,13 +1,3 @@
-export type {
-  ControllerProfileName,
-  ControllerState,
-  DpadDirection,
-  StickName,
-} from "./types";
-export {
-  cloneState,
-  createInitialControllerState,
-} from "./state";
 export {
   controllerProfiles,
   dpadButton,
@@ -18,3 +8,13 @@ export {
   resolveTrigger,
   toUniversal,
 } from "./profiles";
+export {
+  cloneState,
+  createInitialControllerState,
+} from "./state";
+export type {
+  ControllerProfileName,
+  ControllerState,
+  DpadDirection,
+  StickName,
+} from "./types";

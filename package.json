@@ -37,20 +37,26 @@
     "lint": "biome check .",
     "format": "biome check --write ."
   },
-  "keywords": ["ai", "controller", "gamepad", "overlay", "bun"],
+  "keywords": [
+    "ai",
+    "controller",
+    "gamepad",
+    "overlay",
+    "bun"
+  ],
   "license": "MIT",
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
-    "@types/bun": "^1.2.15",
-    "@types/react": "^19.1.6",
-    "@types/react-dom": "^19.1.5",
-    "@vitejs/plugin-react": "^4.5.0",
-    "playwright": "^1.60.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "turbo": "^2.5.4",
-    "typescript": "^5.8.3",
-    "vite": "^6.3.5"
+    "@biomejs/biome": "^2.5.15",
+    "@types/bun": "^1.4.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "playwright": "^1.63.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "turbo": "^2.11.7",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.2"
   },
-  "packageManager": "bun@1.2.15"
+  "packageManager": "bun@1.4.2"
 }

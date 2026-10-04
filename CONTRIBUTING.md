@@ -6,6 +6,8 @@ Please follow [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) when participating.
 
 ## Development Setup
 
+Use Bun 1.4.2, pinned by the root `package.json`.
+
 ```bash
 bun install
 bun run release:check

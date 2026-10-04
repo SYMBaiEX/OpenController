@@ -3,19 +3,19 @@ import {
   type NativeProcessBridgeAdapterOptions,
 } from "@opencontroller/core";
 import {
-  type LinuxUinputBridgeAdapterOptions,
   createLinuxUinputBridgeAdapter,
   defaultLinuxUinputHelperPath,
+  type LinuxUinputBridgeAdapterOptions,
 } from "@opencontroller/native-linux-uinput";
 import {
-  type MacosDriverKitHostBridgeAdapterOptions,
   createMacosDriverKitHostBridgeAdapter,
   defaultMacosDriverKitHostBridgePath,
+  type MacosDriverKitHostBridgeAdapterOptions,
 } from "@opencontroller/native-macos-driverkit";
 import {
-  type WindowsVhfHostBridgeAdapterOptions,
   createWindowsVhfHostBridgeAdapter,
   defaultWindowsVhfHostBridgePath,
+  type WindowsVhfHostBridgeAdapterOptions,
 } from "@opencontroller/native-windows-virtual-gamepad";
 
 export type NativeHostBridgeBackendId =

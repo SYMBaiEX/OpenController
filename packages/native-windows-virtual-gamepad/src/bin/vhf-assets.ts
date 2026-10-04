@@ -1,6 +1,5 @@
 #!/usr/bin/env bun
 import {
-  type WindowsVhfReportProfile,
   createWindowsVhfDriverHeader,
   createWindowsVhfDriverSource,
   createWindowsVhfHostBridgeHeader,
@@ -9,6 +8,7 @@ import {
   formatWindowsVhfHidDescriptorForC,
   formatWindowsVhfPlayStationHidDescriptorForC,
   formatWindowsVhfSwitchHidDescriptorForC,
+  type WindowsVhfReportProfile,
 } from "../vhf";
 
 const args = new Set(process.argv.slice(2));

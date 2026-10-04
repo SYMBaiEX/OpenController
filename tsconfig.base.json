@@ -3,33 +3,32 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "baseUrl": ".",
     "paths": {
-      "@opencontroller/core": ["packages/core/src/index.ts"],
-      "@opencontroller/core/*": ["packages/core/src/*"],
-      "@opencontroller/core/browser": ["packages/core/src/browser.ts"],
-      "@opencontroller/native": ["packages/native/src/index.ts"],
-      "@opencontroller/native/*": ["packages/native/src/*"],
+      "@opencontroller/core": ["./packages/core/src/index.ts"],
+      "@opencontroller/core/*": ["./packages/core/src/*"],
+      "@opencontroller/core/browser": ["./packages/core/src/browser.ts"],
+      "@opencontroller/native": ["./packages/native/src/index.ts"],
+      "@opencontroller/native/*": ["./packages/native/src/*"],
       "@opencontroller/native-linux-uinput": [
-        "packages/native-linux-uinput/src/index.ts"
+        "./packages/native-linux-uinput/src/index.ts"
       ],
       "@opencontroller/native-linux-uinput/*": [
-        "packages/native-linux-uinput/src/*"
+        "./packages/native-linux-uinput/src/*"
       ],
       "@opencontroller/native-macos-driverkit": [
-        "packages/native-macos-driverkit/src/index.ts"
+        "./packages/native-macos-driverkit/src/index.ts"
       ],
       "@opencontroller/native-macos-driverkit/*": [
-        "packages/native-macos-driverkit/src/*"
+        "./packages/native-macos-driverkit/src/*"
       ],
       "@opencontroller/native-windows-virtual-gamepad": [
-        "packages/native-windows-virtual-gamepad/src/index.ts"
+        "./packages/native-windows-virtual-gamepad/src/index.ts"
       ],
       "@opencontroller/native-windows-virtual-gamepad/*": [
-        "packages/native-windows-virtual-gamepad/src/*"
+        "./packages/native-windows-virtual-gamepad/src/*"
       ],
-      "@opencontroller/overlay": ["packages/overlay/src/index.ts"],
-      "@opencontroller/overlay/*": ["packages/overlay/src/*"]
+      "@opencontroller/overlay": ["./packages/overlay/src/index.ts"],
+      "@opencontroller/overlay/*": ["./packages/overlay/src/*"]
     },
     "strict": true,
     "exactOptionalPropertyTypes": true,
