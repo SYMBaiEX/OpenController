@@ -76,6 +76,7 @@ describe("native backend diagnostics", () => {
       },
       capabilities: {
         virtualDevice: true,
+        deviceKind: "native-helper",
         rumble: true,
         lights: true,
         profileHidReports: true,
@@ -90,6 +91,10 @@ describe("native backend diagnostics", () => {
     expect(result.reports[2]?.requirements?.map(({ id }) => id)).toContain(
       "signing",
     );
+    expect(result.reports[1]?.capabilities?.deviceKind).toBe(
+      "os-virtual-gamepad",
+    );
+    expect(result.reports[0]?.nextSteps?.[0]).toContain("Build or install");
   });
 
   test("classifies inaccessible helpers distinctly from missing helpers", async () => {
@@ -105,7 +110,40 @@ describe("native backend diagnostics", () => {
     });
 
     expect(result.reports[0]?.helper?.status).toBe("unavailable");
-    expect(result.reports[0]?.nextSteps?.[0]).toContain("Build or install");
+    expect(result.reports[0]?.nextSteps?.[0]).toContain(
+      "exists but is not accessible",
+    );
+  });
+
+  test("does not recommend off-platform privileged steps", async () => {
+    const result = await diagnoseNativeBackends({
+      selection: "all",
+      platform: "linux",
+      diagnoseBackend: async (backend) => ({
+        ...fakeReport(backend, false),
+        supportedPlatform: backend === "linux-uinput",
+      }),
+      probeHelper: async (backend) => ({
+        path: `/fake/${backend}`,
+        status: "absent",
+        executable: false,
+      }),
+    });
+
+    for (const report of result.reports.filter(
+      ({ backend }) => backend !== "linux-uinput",
+    )) {
+      expect(
+        report.requirements?.some(
+          (requirement) =>
+            ["elevation", "signing", "activation"].includes(requirement.id) &&
+            requirement.status === "needed",
+        ),
+      ).toBe(false);
+      expect(
+        report.nextSteps?.some((step) => step.startsWith("Build or install")),
+      ).toBe(false);
+    }
   });
 
   test("formats a native doctor summary", () => {

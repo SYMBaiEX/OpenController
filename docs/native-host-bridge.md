@@ -168,7 +168,13 @@ Each backend report includes the expected helper path and whether it is
 available, absent, or inaccessible; platform and prerequisite checks; declared
 backend capabilities; requirement statuses; and actionable next steps. The
 `capabilities` object describes the SDK adapter's configured protocol support,
-not a live check that a driver or virtual device is functioning.
+not a live check that a driver or virtual device is functioning. Its
+`virtualDevice` value indicates that the adapter is configured to expose a
+virtual input device; `deviceKind` describes the implementation path (Linux
+uses a `native-helper`, while VHF and DriverKit use OS virtual gamepad drivers).
+An inaccessible helper produces a permissions/path step, while an absent
+helper produces a build/install step. Platform-specific remediation is omitted
+when the selected backend does not run on the current host.
 
 Doctor is read-only. It checks filesystem accessibility and invokes only the
 existing platform diagnostic probes. It does not build or install helpers,

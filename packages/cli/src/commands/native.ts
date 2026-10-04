@@ -375,18 +375,21 @@ export async function diagnoseNativeBackends(
       platform,
     );
     const requirements = readinessRequirements(report);
+    const helperNextStep =
+      helper.status === "absent"
+        ? `Build or install the ${report.label} helper at ${helper.path}, then rerun native doctor.`
+        : helper.status === "unavailable"
+          ? `The ${report.label} helper at ${helper.path} exists but is not accessible; check its permissions and rerun native doctor.`
+          : undefined;
     reports.push({
       ...report,
       helper,
       requirements,
-      capabilities: backendCapabilities(),
+      capabilities: backendCapabilities(id),
       nextSteps: [
         ...new Set([
-          ...(helper.status !== "available" &&
-          helper.status !== "not-applicable"
-            ? [
-                `Build or install the ${report.label} helper at ${helper.path}, then rerun native doctor.`,
-              ]
+          ...(report.supportedPlatform && helperNextStep
+            ? [helperNextStep]
             : []),
           ...requirements
             .filter((requirement) => requirement.status === "needed")
@@ -431,10 +434,13 @@ async function probeNativeHelper(
   }
 }
 
-function backendCapabilities(): NativeBackendCapabilities {
+function backendCapabilities(
+  backend: NativeBackendId,
+): NativeBackendCapabilities {
   return {
     virtualDevice: true,
-    deviceKind: "os-virtual-gamepad",
+    deviceKind:
+      backend === "linux-uinput" ? "native-helper" : "os-virtual-gamepad",
     rumble: true,
     lights: true,
     stateReports: true,
@@ -519,13 +525,13 @@ function readinessRequirements(
       },
       {
         id: "elevation",
-        status: "needed",
+        status: report.supportedPlatform ? "needed" : "unknown",
         detail:
           "Administrator elevation is required to install or update the virtual HID driver; native doctor never requests elevation.",
       },
       {
         id: "signing",
-        status: "needed",
+        status: report.supportedPlatform ? "needed" : "unknown",
         detail:
           "Review and sign the Windows driver package with a trusted certificate before installation.",
       },
@@ -550,13 +556,13 @@ function readinessRequirements(
       },
       {
         id: "signing",
-        status: "needed",
+        status: report.supportedPlatform ? "needed" : "unknown",
         detail:
           "Apple-approved DriverKit entitlements, code signing, and notarization are required for distribution.",
       },
       {
         id: "activation",
-        status: "needed",
+        status: report.supportedPlatform ? "needed" : "unknown",
         detail:
           "The user must approve and activate the DriverKit System Extension; native doctor does not inspect activation state.",
       },
