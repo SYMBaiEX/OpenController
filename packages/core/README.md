@@ -119,6 +119,11 @@ bridge state, and mapped into XInput/HID trigger bytes for trigger-like buttons.
 Plain binary presses on trigger-like buttons, such as `press("RT", 0)`, map to a
 full analog pull.
 
+Timed actions reject negative `durationMs` values. A zero duration remains
+persistent where the action API uses zero-duration input, while positive values
+request a timed hold. The requested SDK duration is not a guarantee of how long
+the target game observes the input or how many frames it spans.
+
 Direct D-pad button presses also keep the structured D-pad state synchronized:
 
 ```ts

@@ -73,6 +73,7 @@ export class ControllerRuntime {
     context: CommandContext = {},
     signal?: AbortSignal,
   ): Promise<void> {
+    this.safety.assertNonNegativeDurations(command);
     const timedPressSignal = isPositiveTimedPress(command) ? signal : undefined;
     if (timedPressSignal?.aborted) {
       throw new TimedPressAbortError({
