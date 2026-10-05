@@ -1,8 +1,13 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { access, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { runAgentActionMapExample } from "./ai-agent-integration";
+import {
+  arrowBindings,
+  runSemanticBindingExample,
+  validateInputBindings,
+  wasdBindings,
+} from "./ai-agent-integration";
 import { runGettingStartedDryRun } from "./getting-started";
 import { runBasicDryRunExample } from "./index";
 
@@ -61,19 +66,83 @@ try {
   );
   assert.equal(gettingStartedStates.at(-1)?.state?.connected, false);
 
-  const agentDir = join(replayRoot, "agent-action-map");
-  const { heldState, releasedState } = await runAgentActionMapExample(agentDir);
-  assert.equal(heldState.buttons.LB, true);
-  assert.equal(releasedState.buttons.LB, false);
-  const agentCommands = await readEvents<ReplayCommand>(
-    agentDir,
+  const wasdDir = join(replayRoot, "wasd");
+  const wasdState = await runSemanticBindingExample(
+    wasdBindings,
+    "KeyA",
+    wasdDir,
+  );
+  assert.deepEqual(wasdState.sticks.left, { x: -1, y: 0 });
+  const wasdCommands = await readEvents<ReplayCommand>(
+    wasdDir,
+    "commands.jsonl",
+  );
+  assert.deepEqual(wasdCommands.map((event) => event.intent).filter(Boolean), [
+    "moveLeft",
+  ]);
+  assert.equal(wasdCommands[0]?.command.type, "setStick");
+
+  const arrowsDir = join(replayRoot, "arrows");
+  const arrowsState = await runSemanticBindingExample(
+    arrowBindings,
+    "ArrowLeft",
+    arrowsDir,
+  );
+  assert.deepEqual(arrowsState.sticks.left, { x: -1, y: 0 });
+  const arrowCommands = await readEvents<ReplayCommand>(
+    arrowsDir,
+    "commands.jsonl",
+  );
+  assert.deepEqual(arrowCommands.map((event) => event.intent).filter(Boolean), [
+    "moveLeft",
+  ]);
+  assert.equal(arrowCommands[0]?.command.type, "setStick");
+
+  const confirmDir = join(replayRoot, "wasd-confirm");
+  const confirmState = await runSemanticBindingExample(
+    wasdBindings,
+    "Space",
+    confirmDir,
+  );
+  assert.equal(confirmState.buttons.A, true);
+  const confirmCommands = await readEvents<ReplayCommand>(
+    confirmDir,
     "commands.jsonl",
   );
   assert.deepEqual(
-    agentCommands.slice(0, 2).map((event) => event.intent),
-    ["holdBlock", "releaseBlock"],
+    confirmCommands.map((event) => event.intent).filter(Boolean),
+    ["confirm"],
   );
-  assert.equal(agentCommands[0]?.command.button, "LB");
+  assert.equal(confirmCommands[0]?.command.button, "A");
+
+  const unknownBindingsDir = join(replayRoot, "unknown-action");
+  await assert.rejects(
+    runSemanticBindingExample(
+      [{ sourceId: "KeyA", actionId: "teleport" }],
+      "KeyA",
+      unknownBindingsDir,
+    ),
+    /Unknown semantic action: teleport/,
+  );
+  await assert.rejects(access(unknownBindingsDir));
+
+  const conflictBindingsDir = join(replayRoot, "conflicting-source");
+  await assert.rejects(
+    runSemanticBindingExample(
+      [
+        { sourceId: "KeyA", actionId: "moveLeft" },
+        { sourceId: "KeyA", actionId: "confirm" },
+      ],
+      "KeyA",
+      conflictBindingsDir,
+    ),
+    /Conflicting source identifier: KeyA/,
+  );
+  await assert.rejects(access(conflictBindingsDir));
+  assert.throws(
+    () => validateInputBindings([{ sourceId: "KeyA", actionId: "nope" }]),
+    /Unknown semantic action/,
+  );
 
   const basicDir = join(replayRoot, "basic");
   const basicState = await runBasicDryRunExample(basicDir);
@@ -91,7 +160,9 @@ try {
     ),
   );
 
-  console.log("Dry-run documentation examples updated state and replay logs.");
+  console.log(
+    "Dry-run documentation examples updated state, replay logs, and rejected invalid bindings before dispatch.",
+  );
 } finally {
   await rm(replayRoot, { recursive: true, force: true });
 }
