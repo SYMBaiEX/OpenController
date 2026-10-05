@@ -49,6 +49,7 @@ export class Controller {
           : {}),
       },
       options?.context,
+      options?.signal,
     );
   }
 
