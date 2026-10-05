@@ -1,6 +1,6 @@
 # OpenController AI and Gaming Opportunity Goal
 
-**Status:** Cycle 1 merged in PRs #1–#4. Cycle 2 issues #8 and #9 merged in PRs #12 and #13; #10 remains deferred. Cycle 3 issue #14 merged in PR #19; #15 remains deferred. Cycle 4 issue #22 merged in PR #25; gate #23 closed in PR #30. Cycle 5 issue #27 merged in PR #32; gate #29 closed in PR #36 at `f44fe793ea4fef069c2a187084fcaa536848b336`. Cycle 6 issue #20 merged in PR #38 at `f20aab9ea80be7e01b5337c9000b6322f4a8bb5d`; gate #35 and milestone 5 closed in PR #43. Cycle 7 gate #37 closed in PR #48; all six selected issues (#39–#42, #45, #47) are implemented and merged in PRs #49–#54, and this closeout records their results before milestone 6 closes. #44 and #46 remain deferred. Whole-match regression baselines and Reddit/accessibility coverage remain open gaps. GitHub Project V2 creation is blocked by the integration's missing Projects write access; repository milestones, labels, issue dependencies, and recurring goal issue #55 track the DAG.
+**Status:** Cycle 1 merged in PRs #1–#4. Cycle 2 issues #8 and #9 merged in PRs #12 and #13; #10 remains deferred. Cycle 3 issue #14 merged in PR #19; #15 remains deferred. Cycle 4 issue #22 merged in PR #25; gate #23 closed in PR #30. Cycle 5 issue #27 merged in PR #32; gate #29 closed in PR #36 at `f44fe793ea4fef069c2a187084fcaa536848b336`. Cycle 6 issue #20 merged in PR #38 at `f20aab9ea80be7e01b5337c9000b6322f4a8bb5d`; gate #35 and milestone 5 closed in PR #43. Cycle 7 gate #37 closed in PR #48; all six selected issues (#39–#42, #45, #47) are implemented and merged in PRs #49–#54, and milestone 6 is closed. #44 and #46 remain deferred. Whole-match regression baselines and Reddit/accessibility coverage remain open gaps. Cycle 8 gate #57 closed in PR #63; selected issues #58, #59, and #61 merged in PRs #66, #64, and #65. Cycle 9 gate #67 ranks repository findings #34 and #33 and is closed by the Cycle 8 closeout/decision PR before their implementation starts. GitHub Project V2 creation is blocked by the integration's missing Projects write access; repository milestones, labels, issue dependencies, and recurring goal issue #55 track the DAG.
 
 ## Product goal
 
@@ -453,11 +453,11 @@ All six selected issues are closed by their merged implementation PRs. The `test
 
 | Issue | PR and merge commit | Result and validation |
 | --- | --- | --- |
-| [#41](https://github.com/SYMBaiEX/OpenController/issues/41) | [#49](https://github.com/SYMBaiEX/OpenController/pull/49), `a4900acd6151c9782e9d5c608a98d96746f905da` | Clarified keyboard/mouse profile report semantics. Focused conformance coverage and independent review passed. |
+| [#41](https://github.com/SYMBaiEX/OpenController/issues/41) | [#49](https://github.com/SYMBaiEX/OpenController/pull/49), `a4900acd6151c9782e9d5c608a98d96746f905da` | Clarified keyboard/mouse profile report semantics. Focused conformance coverage and independent internal Luna review passed. |
 | [#45](https://github.com/SYMBaiEX/OpenController/issues/45) | [#52](https://github.com/SYMBaiEX/OpenController/pull/52), `db220d3938415b1834bb59db888f9f63962cf9aa` | Documented motion values, axes, and coordinate-frame limits after #41. Independent review confirmed docs match implementation and conformance boundaries. |
-| [#47](https://github.com/SYMBaiEX/OpenController/issues/47) | [#50](https://github.com/SYMBaiEX/OpenController/pull/50), `c3657d3d9747503f45a39918c5e9eca994ddc165` | `disconnectAll` waits for all attempts, removes successes, retains failed controllers and original errors. Focused tests (4/4), root typecheck/build, and independent review passed. |
+| [#47](https://github.com/SYMBaiEX/OpenController/issues/47) | [#50](https://github.com/SYMBaiEX/OpenController/pull/50), `c3657d3d9747503f45a39918c5e9eca994ddc165` | `disconnectAll` waits for all attempts, removes successes, retains failed controllers and original errors. Focused tests (4/4), root typecheck/build, and independent internal Luna review passed. |
 | [#40](https://github.com/SYMBaiEX/OpenController/issues/40) | [#51](https://github.com/SYMBaiEX/OpenController/pull/51), `cb1038e43b9f5d377c9e41f309210d5167909593` | Added a dry-run-first, allowlisted MCP controller example with sanitized failures and guaranteed cleanup. Smoke, typecheck/build, and independent exact-head review passed. |
-| [#39](https://github.com/SYMBaiEX/OpenController/issues/39) | [#53](https://github.com/SYMBaiEX/OpenController/pull/53), `c7b744ed93a8c2d306f5c76e1b0c550eb0382c70` | Timed presses release on cancellation and preserve post-press, release, and neutralization errors. Final-head validation: focused tests (11/11), core suite (76/76), typecheck/build, targeted Biome, and independent review passed. |
+| [#39](https://github.com/SYMBaiEX/OpenController/issues/39) | [#53](https://github.com/SYMBaiEX/OpenController/pull/53), `c7b744ed93a8c2d306f5c76e1b0c550eb0382c70` | Timed presses release on cancellation and preserve post-press, release, and neutralization errors. Final-head validation: focused tests (11/11), core suite (76/76), typecheck/build, targeted Biome, and independent internal Luna review passed. |
 | [#42](https://github.com/SYMBaiEX/OpenController/issues/42) | [#54](https://github.com/SYMBaiEX/OpenController/pull/54), `b7b69951a2e51f60990c35dd34c35d90004b70b4` | Added offline per-command state-transition verification, mismatch/unverifiable diagnostics, and malformed-event validation. Final-head validation: CLI suite (40/40), typecheck/build, targeted Biome, built CLI checks, CI, and independent exact-head review passed. |
 
 The implementation DAG is complete: #41 -> #45, with #39, #40, #42, and #47 on independent lanes. All selected PRs merged after focused validation and independent review. #44 remains deferred pending an agreed adaptive-trigger direction, schema, capability negotiation, and actuator consumer; #46 remains deferred pending an owned helper readiness protocol and lifecycle semantics.
@@ -505,12 +505,77 @@ The selected lanes own disjoint implementation files and may proceed in parallel
 - [x] Audit candidates against existing issues and repository ownership boundaries.
 - [x] Rank opportunities and create bounded, evidence-backed implementation issues.
 - [x] Create native DAG edges from gate #57 to selected issues #58, #59, and #61.
-- [ ] Merge this decision record before selected implementation work begins.
-- [ ] Implement and independently review each selected lane on its exact PR head; pass relevant checks.
-- [ ] Merge reviewed PRs in dependency order; record commits, checks, and any deferrals.
-- [ ] Close milestone 7 after all selected work is complete and open the next research gate.
+- [x] Merge this decision record before selected implementation work begins.
+- [x] Implement and independently review each selected lane on its exact PR head; pass relevant checks.
+- [x] Merge reviewed PRs in dependency order; record commits, checks, and any deferrals.
+- [x] Close milestone 7 after all selected work is complete and open the next research gate.
 
 Cycle 8 does not claim that retries correct persistent permissions, that documentation verifies host/game input, or that semantic action examples provide input capture, OS remapping, or an accessibility UI.
+
+## Cycle 8 implementation closeout (2026-10-05)
+
+All three selected issues merged after CI and independent internal gpt-6-luna exact-head review. CodeRabbit statuses were green with rate-limit notes.
+
+| Issue | PR and merge commit | Result and validation |
+| --- | --- | --- |
+| [#59](https://github.com/SYMBaiEX/OpenController/issues/59) | [#64](https://github.com/SYMBaiEX/OpenController/pull/64), `08d34ddca21beb9d3cd930e8d9c738e39a6a90bd` | Linux doctor/setup guidance now distinguishes transient startup timing from persistent `/dev/uinput` owner/mode denial. The tmpfiles example adjusts an existing node only and leaves the choice of group/system policy to the user. Focused diagnostics tests (4), package typecheck/build, workspace build, 7-package `pack:check`, targeted Biome, diff check, CI, and independent internal Luna review passed. |
+| [#61](https://github.com/SYMBaiEX/OpenController/issues/61) | [#65](https://github.com/SYMBaiEX/OpenController/pull/65), `d5c572301a305e5f469b305757d358188761aea1` | Added two caller-owned input binding sets that resolve to the same semantic action map. Validation rejects unknown actions and duplicate sources before controller creation; smoke checks verify invalid configurations do not create a replay path. Dry-run example checks, typecheck, lint, direct example run, full CI, and independent internal Luna review passed. This proves SDK-side command/state behavior only. |
+| [#58](https://github.com/SYMBaiEX/OpenController/issues/58) | [#66](https://github.com/SYMBaiEX/OpenController/pull/66), `ff40ca2e9b2cd4593c2c0644a03d583753283727` | The Linux helper retries only `ENOENT` and `EACCES`, at most five opens with 10/20/40/40 ms delays (110 ms maximum requested sleep), then reports the final error. It never changes permissions. The deterministic C harness exercises the same retry function used by production and covers transient success, exhausted retries, and immediate non-retryable failure. Native package tests (20/20), root typecheck/build/pack checks, targeted Biome, strict C compilation, the missing-node runtime check, full CI, and independent internal Luna review passed. Persistent permissions still require user/system configuration. |
+
+The Cycle 8 implementation DAG was three independent lanes after gate #57; all selected PRs are merged and milestone 7 is closed with zero open issues. No check proves real hardware, host, Steam, browser, or game consumption.
+
+Cycle 8 gate #57 closed in decision PR #63 at merge commit `f46c6fa87d145a4fb18686fac1467a9e39363805`. Its acceptance checklist is complete:
+
+- [x] Search and record dated public sources, workarounds, fit, confidence, and coverage gaps.
+- [x] Audit repository ownership and existing issues.
+- [x] Rank candidates and select bounded implementation lanes.
+- [x] Add gate-to-candidate issue dependency edges.
+- [x] Merge the decision record before implementation.
+- [x] Implement and independently review issues #58, #59, and #61 on their exact PR heads.
+- [x] Merge PRs #64–#66 after CI and review.
+- [x] Close milestone 7 and open the next research/build gate.
+
+## Cycle 9 research decision and build DAG (2026-10-05)
+
+Research gate [#67](https://github.com/SYMBaiEX/OpenController/issues/67) records the new AI/game, gaming/platform, and adaptive-input source log, workarounds, confidence, repository fit, overlap audit, and coverage limits. The sweep found substantial adjacent pain, but no new independently supported OpenController controller defect: remote-play sessions and observation belong to game/streaming integrations; provider quotas belong to model tools; reconnect/mapping reports are upstream Proton/SDL/driver cases; XAC/Flex reports concern external firmware and physical-device paths. Reddit mirrors were blocked and no first-party OpenController user telemetry exists. These are not prevalence estimates.
+
+The repository audit found two directly verifiable correctness gaps. They are selected as repository findings, not as claims of externally demonstrated OpenController demand.
+
+| Rank | Issue | Repository finding and impact | Scope and risk |
+| --- | --- | --- | --- |
+| 1 | [#34 negative action durations](https://github.com/SYMBaiEX/OpenController/issues/34) | The safety guard checks maximum duration but allows negative values. Runtime applies the control and skips auto-release/reset unless duration is positive. Trigger is timed but missing from duration validation; nested sequences need recursive checking. | Reject `< 0` before adapter output for every duration-bearing command, including trigger and nested commands. Preserve zero-duration persistence and positive behavior. Do not change the separate trigger maximum-hold policy. Low cost; risk is changing intentional zero semantics. |
+| 2 | [#33 configured bridge capabilities](https://github.com/SYMBaiEX/OpenController/issues/33) | Both native bridge adapters advertise touchpad, gyro, and profile HID formats statically even when configured serializers omit state, extensions, and profile HID channels. | Align SDK serialization metadata with configured outputs for default and fully suppressed options on both adapters. Keep host/device/game support claims out. Low/medium cost; risk is defining metadata semantics precisely. |
+
+Fresh external leads without a verified repository gap remain deferred: headless external-agent session APIs, benchmark setup-error classification, XAC compatibility, and axis calibration. Revisit those only after a supported integration or OpenController-specific reproduction exists.
+
+Cycle 8 issue [#58](https://github.com/SYMBaiEX/OpenController/issues/58) is the prerequisite for gate #67. This closeout/decision PR closes #67; then #34 and #33 become independent parallel build lanes in milestone 8:
+
+```mermaid
+flowchart TD
+  C8[#58 and Cycle 8 closeout] --> G[Cycle 9 gate #67]
+  G --> D[Closeout/decision PR #68]
+  D --> A[#34 reject negative durations]
+  D --> B[#33 align configured bridge capabilities]
+  A --> R[Exact-head Luna review and required checks]
+  B --> R
+  R --> M[Merge each ready PR; record closeout]
+  M --> N[Open the next research gate]
+```
+
+The selected issues have disjoint primary files. Build them in separate worktrees, fetch before implementation and final validation, and stack only if a real dependency appears. Native GitHub dependencies encode `#58 -> #67 -> (#34, #33)`; milestone and labels track the active work while Projects V2 write access remains unavailable.
+
+### Cycle 9 gate checklist
+
+- [x] Research AI/game, platform, and adaptive-input sources; record workarounds and source-coverage gaps.
+- [x] Audit repository code and distinguish confirmed code gaps from adjacent external reports.
+- [x] Rank repository findings #34 and #33 and defer unsupported/out-of-scope ideas.
+- [x] Put #33 and #34 in milestone 8 with candidate labels and native dependencies from #67.
+- [x] Wait for Cycle 8 issue #58 and the closeout/decision PR before releasing implementation.
+- [ ] Implement and independently review #34 and #33 on exact PR heads.
+- [ ] Merge both lanes with relevant checks and record commits/results.
+- [ ] Close milestone 8 and start the next evidence sweep.
+
+The recurring research/build/review/merge checklist remains in [#55](https://github.com/SYMBaiEX/OpenController/issues/55). Cycle 9 is not a claim that every forum or pain point was covered; its source limits remain explicit in #67.
 
 ## Branch and swarm operating rules
 
