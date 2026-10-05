@@ -87,3 +87,33 @@ using standard CSV quoting. For spreadsheet safety, CSV cells whose text starts
 with `=`, `+`, `-`, or `@`, including after whitespace or control characters,
 are prefixed with an apostrophe. This changes only the presentation cell;
 `event_json` retains the original event values for lossless import and analysis.
+
+## Verify recorded command transitions
+
+Use offline verification to check whether each logged command's immediate
+controller input state matches its recorded `stateAfter`:
+
+```bash
+opencontroller replay verify ./replays/session-001/events.jsonl
+```
+
+For each command event, the verifier applies the command to that event's
+`stateBefore` and compares `buttons`, `analogButtons`, `triggers`, `sticks`,
+`dpad`, `touchpad`, and `motion` with `stateAfter`. It checks events
+independently, so the log does not need to contain a complete state chain.
+Timed commands are checked at their logged boundary: a timed press is checked
+while pressed, and its later logged release is checked as a separate event.
+Verification does not wait for `durationMs`, synthesize a release, open an
+adapter, or send input to a host.
+
+The output reports `timestamp`, controller and session identity, connection
+state, `updatedAt`, `status`, and `feedback` as context that it cannot verify.
+Legacy events missing a profile, state snapshot, or command data and commands
+that cannot be simulated under a supported profile are reported as
+unverifiable with their one-based event and line numbers. A mismatch reports
+the first differing deterministic field path. Malformed JSON or event records
+are errors with their line and event location.
+
+This verifies OpenController's recorded state semantics only. It cannot
+confirm adapter handoff, whether a host received a command, or any GUI or game
+behavior or outcome.

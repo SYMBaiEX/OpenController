@@ -1,0 +1,3 @@
+{"type":"command","controllerId":"pad-1","profile":"xbox","command":{"type":"future-command"}}
+{"type":"command","controllerId":"pad-1","profile":"arcade","command":{"type":"press","button":"A"}}
+{"type":"command","controllerId":"pad-1","profile":"xbox","command":{"type":"setButton","button":"A"}}
