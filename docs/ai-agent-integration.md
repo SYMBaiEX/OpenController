@@ -37,14 +37,31 @@ The patch is partial: controls not listed keep their current state. The runtime
 still performs profile normalization, safety checks, replay logging, and one
 adapter state-sync message.
 
-For safer model-facing control, use named action maps. Run the canonical
-hold-and-release example from the repository root:
+For safer model-facing control, use named action maps. The runnable
+[semantic binding example](../examples/basic-dry-run/ai-agent-integration.ts)
+defines stable action IDs (`moveLeft`, `moveRight`, and `confirm`) separately
+from caller-owned source identifiers. It supplies two binding sets: one for
+WASD-style identifiers and one for arrow/Enter identifiers. Both route to the
+same `createActionMap`, which defines the OpenController commands for those
+semantic actions.
+
+The consuming application owns input events and passes a source identifier to
+its selected binding set. The example validates the full set first, rejecting
+unknown semantic actions and duplicate source identifiers before creating or
+commanding a controller. It then resolves the source identifier and dispatches
+the mapped semantic action. OpenController does not capture keyboard or
+physical gamepad input, change OS or Steam remapping, or provide a settings UI
+or persistent user profile. The consuming application still owns its input
+capture, conflict policy, persistence, and recovery experience.
+
+Run both binding sets from the repository root:
 
 ```bash
 bun run examples/basic-dry-run/ai-agent-integration.ts
 ```
 
-The [runnable source](../examples/basic-dry-run/ai-agent-integration.ts) holds
-and releases a button through named actions. CI executes that same source and
-checks both states and replay intents with `bun run check:dry-run-examples`.
-Action maps keep model output constrained to named, reviewed behaviors.
+The dry-run smoke check covers both valid sets and invalid unknown/conflicting
+bindings with `bun run check:dry-run-examples`. It verifies OpenController
+commands and dry-run state only; it does not establish host, browser, Steam,
+physical device, or game input behavior. Action maps keep model output
+constrained to named, reviewed behaviors.
