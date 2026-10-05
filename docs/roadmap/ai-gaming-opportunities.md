@@ -1,6 +1,6 @@
 # OpenController AI and Gaming Opportunity Goal
 
-**Status:** Cycle 1 merged in PRs #1–#4. Cycle 2 issues #8 and #9 merged in PRs #12 and #13; #10 remains deferred. Cycle 3 issue #14 merged in PR #19; #15 remains deferred. Cycle 4 issue #22 merged in PR #25; gate #23 closed in PR #30. Cycle 5 issue #27 merged in PR #32; gate #29 closed in PR #36 at `f44fe793ea4fef069c2a187084fcaa536848b336`. Cycle 6 issue #20 merged in PR #38 at `f20aab9ea80be7e01b5337c9000b6322f4a8bb5d`; gate #35 and milestone 5 closed in PR #43. Cycle 7 gate #37 closed in PR #48; all six selected issues (#39–#42, #45, #47) are implemented and merged in PRs #49–#54, and milestone 6 is closed. #44 and #46 remain deferred. Whole-match regression baselines and Reddit/accessibility coverage remain open gaps. Cycle 8 gate #57 closed in PR #63; selected issues #58, #59, and #61 merged in PRs #66, #64, and #65. Cycle 9 gate #67 ranks repository findings #34 and #33 and is closed by the Cycle 8 closeout/decision PR before their implementation starts. GitHub Project V2 creation is blocked by the integration's missing Projects write access; repository milestones, labels, issue dependencies, and recurring goal issue #55 track the DAG.
+**Status:** Cycle 1 merged in PRs #1–#4. Cycle 2 issues #8 and #9 merged in PRs #12 and #13; #10 remains deferred. Cycle 3 issue #14 merged in PR #19; #15 remains deferred. Cycle 4 issue #22 merged in PR #25; gate #23 closed in PR #30. Cycle 5 issue #27 merged in PR #32; gate #29 closed in PR #36 at `f44fe793ea4fef069c2a187084fcaa536848b336`. Cycle 6 issue #20 merged in PR #38 at `f20aab9ea80be7e01b5337c9000b6322f4a8bb5d`; gate #35 and milestone 5 closed in PR #43. Cycle 7 gate #37 closed in PR #48; all six selected issues (#39–#42, #45, #47) are implemented and merged in PRs #49–#54, and milestone 6 is closed. #44 and #46 remain deferred. Whole-match regression baselines and Reddit/accessibility coverage remain open gaps. Cycle 8 gate #57 closed in PR #63; selected issues #58, #59, and #61 merged in PRs #66, #64, and #65. Cycle 9 gate #67 ranks repository findings #34 and #33 and was closed by Cycle 8 closeout/decision PR #68. Both implementation PRs #69 and #70 are merged; milestone 8 is closed. Cycle 10 gate #71 completed the AI, gaming, and accessibility sweep and repository audit; it selected no new implementation because current signals were upstream-owned, weak-fit, or already tracked. Milestone 9 closes with this decision. GitHub Project V2 creation is blocked by the integration's missing Projects write access; repository milestones, labels, issue dependencies, and recurring goal issue #55 track the DAG.
 
 ## Product goal
 
@@ -160,13 +160,15 @@ still not probed by the current native doctor, so their readiness remains
 
 ```mermaid
 flowchart TD
-  A[Cycle 5 closeout PR #36 merged; close gate #29] --> B[Cycle 6 gate #35]
-  C[Selected native-test cleanup #20] --> B
-  B --> D[Implementation PR #38 merged]
-  D --> E[Cycle 6 roadmap closeout PR; close gate #35 and milestone 5]
-  E --> F[Cycle 7 research gate #37]
-  F --> G[Create and rank independent candidate issues]
-  G --> H[Select parallel build lanes and form implementation DAG]
+  A[Cycle 7 closeout PR #56; milestone 6 closed] --> B[Cycle 8 gate #57]
+  B --> C[Decision PR #63; select #58, #59, #61]
+  C --> D[Implementation PRs #64, #65, #66]
+  D --> E[Cycle 8 closeout / Cycle 9 decision PR #68]
+  E --> F[Cycle 9 parallel PRs #69 and #70]
+  F --> G[Cycle 9 closeout; milestone 8 closed]
+  G --> H[Cycle 10 gate #71; public research and repository audit]
+  H --> I[No new SDK-owned candidate; close milestone 9]
+  I --> J[Continue the recurring research gate]
 ```
 
 The DAG repeats research, repository audit, bounded selection, implementation,
@@ -571,12 +573,56 @@ The selected issues have disjoint primary files. Build them in separate worktree
 - [x] Rank repository findings #34 and #33 and defer unsupported/out-of-scope ideas.
 - [x] Put #33 and #34 in milestone 8 with candidate labels and native dependencies from #67.
 - [x] Wait for Cycle 8 issue #58 and the closeout/decision PR before releasing implementation.
-- [ ] Implement and independently review #34 and #33 on exact PR heads.
-- [ ] Merge both lanes with relevant checks and record commits/results.
-- [ ] Close milestone 8 and start the next evidence sweep.
+- [x] Implement and independently review #34 and #33 on exact PR heads.
+- [x] Merge both lanes with relevant checks and record commits/results.
+- [x] Close milestone 8 and start the next evidence sweep.
 
 The recurring research/build/review/merge checklist remains in [#55](https://github.com/SYMBaiEX/OpenController/issues/55). Cycle 9 is not a claim that every forum or pain point was covered; its source limits remain explicit in #67.
 
+## Cycle 9 implementation closeout (2026-10-05)
+
+Both selected repository-correctness issues are merged. Milestone 8 closed with zero open issues. Each final code head passed GitHub's `test` check and received independent internal gpt-6-luna review with no blockers.
+
+| Issue | PR and merge commit | Result and validation |
+| --- | --- | --- |
+| [#33](https://github.com/SYMBaiEX/OpenController/issues/33) | [#69](https://github.com/SYMBaiEX/OpenController/pull/69), `42d7a3aac764ba949fe4083eaf24eff3ebadf986` | Both native bridge adapters now derive touchpad, motion, and profile HID claims from the same output options as the serializer. Default and fully suppressed modes are tested for both adapters; accepted commands remain advertised. Adapter docs distinguish SDK serialization from downstream support. Core tests (82/82), workspace build (10 tasks), typecheck, targeted Biome, diff check, GitHub CI, and independent review passed. CodeRabbit status passed with a rate-limit note. |
+| [#34](https://github.com/SYMBaiEX/OpenController/issues/34) | [#70](https://github.com/SYMBaiEX/OpenController/pull/70), `c4791ddab2a103cc30df58a10904f8fac4cd3052` | Rejects negative durations before commands enter the runtime queue, including trigger and nested sequence/action-map commands. Zero-duration persistent input and positive trigger release remain valid. Focused public API tests (2 tests, 18 assertions), core tests (82/82), core typecheck/build, changed-file Biome, GitHub CI, and exact-head review passed. The branch was rebased after #69. CodeRabbit review remained pending at merge; the independent Luna review found no blocker. |
+
+The Cycle 9 selection was based on verified repository behavior, not an externally demonstrated OpenController incident. The public reports in gate #67 mostly concern upstream drivers, game engines, remote-play clients, adaptive-controller firmware, or model-provider limits. No first-party telemetry exists and Reddit mirrors were blocked; source coverage is not exhaustive.
+
+Cycle 9 gate #67 closed in PR #68 at `aa57f176d8bfada5e51d8ee5244fa6591f0b0ace`. Issues #33 and #34 are closed, and milestone 8 is closed. Its acceptance checklist is complete:
+
+- [x] Gather public evidence and record its limits and fit.
+- [x] Audit repository behavior and distinguish code findings from external reports.
+- [x] Rank #34 and #33 and keep unsupported requests deferred.
+- [x] Put both issues in milestone 8 with native gate dependencies.
+- [x] Close Cycle 8 issue #58 and the Cycle 8 closeout before releasing implementation.
+- [x] Implement and independently review both exact PR heads.
+- [x] Merge both PRs and close milestone 8 with zero open issues.
+
+## Cycle 10 research gate (#71)
+
+Three gpt-6-luna research lanes covered AI-agent/game control, gaming/platform reports, and accessibility/adaptive input. A separate Luna repository audit checked the results against the SDK boundary and existing issues. The dated source log, workarounds, evidence confidence, fit assessment, and coverage gaps are recorded in [gate #71](https://github.com/SYMBaiEX/OpenController/issues/71).
+
+The sweep found detailed but low-fit desktop Computer Use reports such as [Codex #44074](https://github.com/openai/codex/issues/44074), upstream Proton/Godot/SDL/Sunshine driver or consumer reports, and Steam Controller accessibility anecdotes from 2015–2023. These do not establish an uncovered OpenController defect. OpenController already supports bounded gamepad presses and cancellation (#39, #34), while controller profile documentation says its keyboard/mouse names do not emit desktop events. The one-handed Steam Controller exchange describes concurrent Steam Input devices but does not demonstrate an unmet OpenController API need.
+
+The repository audit selected no new issue. Existing #46 (helper readiness) remains gated on an owned helper acknowledgement contract; #60 (persistent-state expiry) remains deferred because no OpenController stale-state incident was shown and timer/error ordering is nontrivial. #21, #28, and #62 still need a named host/game or supported hardware test path. The decision is a deliberate no-build result, not a claim that demand is absent: Reddit and several search/community endpoints returned 403, Steam search rate-limited, and no first-party telemetry or hardware verification is available.
+
+The Cycle 10 decision DAG is:
+
+```mermaid
+flowchart TD
+  A[AI, gaming, accessibility source sweep] --> B[Repository and duplicate-issue audit]
+  B --> C{Uncovered SDK-owned candidate with evidence?}
+  C -->|No: Cycle 10| D[Record no-build decision and close milestone 9]
+  C -->|Yes| E[Create scoped issues and dependency DAG]
+  E --> F[Parallel Luna worktrees and PRs]
+  F --> G[Exact-head checks and independent review]
+  G --> H[Merge in DAG order; start next research gate]
+  D --> H
+```
+
+The recurring goal [#55](https://github.com/SYMBaiEX/OpenController/issues/55) carries the research/build/review/merge checklist forward. Continue the next source sweep from fresh reports; do not reopen deferred work unless its evidence or prerequisites change.
 ## Branch and swarm operating rules
 
 
