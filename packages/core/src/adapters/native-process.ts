@@ -163,6 +163,10 @@ export class NativeProcessBridgeAdapter implements ControllerAdapter {
   }
 
   capabilities() {
+    const includeState = this.options.includeState !== false;
+    const includeExtensions = this.options.includeExtensions !== false;
+    const includeProfileHidReport =
+      this.options.includeProfileHidReport !== false;
     const supportsRumble = this.options.supportsRumble ?? false;
     const supportsLights = this.options.supportsLights ?? false;
     const supportsVirtualDevice = this.options.supportsVirtualDevice ?? true;
@@ -176,27 +180,34 @@ export class NativeProcessBridgeAdapter implements ControllerAdapter {
       supportsNativeBridge: true,
       supportsRumble,
       supportsLights,
-      supportsTouchpad: true,
-      supportsGyro: true,
-      supportsDeviceStatus: true,
+      supportsTouchpad:
+        includeState || includeExtensions || includeProfileHidReport,
+      supportsGyro:
+        includeState || includeExtensions || includeProfileHidReport,
+      supportsDeviceStatus: includeState || includeExtensions,
       supportsVirtualDevice,
       supportedCommands: controllerCommandTypes,
       requiresNativeInstall: this.options.requiresNativeInstall ?? true,
       requiresElevatedPermissions:
         this.options.requiresElevatedPermissions ?? false,
       outputFormats: [
-        "controller-state",
+        ...(includeState ? (["controller-state"] as const) : []),
         "xinput-report",
         "hid-gamepad-report",
-        "hid-playstation-extended-report",
-        "hid-switch-extended-report",
+        ...(includeProfileHidReport
+          ? ([
+              "hid-playstation-extended-report",
+              "hid-switch-extended-report",
+            ] as const)
+          : []),
         "native-bridge-jsonl",
       ],
       reportFormats: [
         "xinput",
         "hid-gamepad",
-        "hid-playstation-extended",
-        "hid-switch-extended",
+        ...(includeProfileHidReport
+          ? (["hid-playstation-extended", "hid-switch-extended"] as const)
+          : []),
         ...feedbackReportFormats,
       ],
       feedbackTypes: [

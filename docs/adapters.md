@@ -35,6 +35,21 @@ new metadata fields make backend selection easier for agents and host apps:
 - `transport`: memory, callback, WebSocket, or native process
 - `virtualDeviceKind`: none, native helper, or OS virtual gamepad
 
+For `NativeBridgeAdapter` and `NativeProcessBridgeAdapter`, these formats and
+feature booleans describe the configured SDK serializer. Their default options
+advertise full controller state, touchpad/motion/status data, and profile HID
+reports. Disabling `includeState`, `includeExtensions`, and
+`includeProfileHidReport` removes those corresponding claims while retaining
+the XInput and HID gamepad reports and the JSONL transport. Touchpad and gyro
+remain advertised if any enabled state channel can carry them; device status
+tracks the full state and extensions channels.
+`supportedCommands` continues to describe runtime actions the adapter accepts;
+it does not change when an output channel is suppressed.
+
+This metadata does not establish support from the operating system, browser,
+physical device, Steam, or a game. Those layers may omit or reinterpret data
+even when the SDK serializer emits it.
+
 ```ts
 const capabilities = controller.capabilities();
 
