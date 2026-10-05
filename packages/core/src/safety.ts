@@ -58,10 +58,29 @@ export class SafetyGuard {
   }
 
   assert(command: ControllerCommand): void {
+    this.assertNonNegativeDurations(command);
     this.assertRateLimit();
     this.assertDurations(command);
     this.assertDisabledControls(command);
     this.assertInputLoop(command);
+  }
+
+  assertNonNegativeDurations(command: ControllerCommand): void {
+    if (
+      "durationMs" in command &&
+      command.durationMs !== undefined &&
+      command.durationMs < 0
+    ) {
+      throw new SafetyError(
+        `Action duration ${command.durationMs}ms must not be negative`,
+      );
+    }
+
+    if (command.type === "sequence") {
+      for (const child of command.commands) {
+        this.assertNonNegativeDurations(child);
+      }
+    }
   }
 
   private assertRateLimit(): void {
@@ -88,7 +107,7 @@ export class SafetyGuard {
       (command.type === "press" ||
         command.type === "combo" ||
         command.type === "dpad") &&
-      command.durationMs
+      command.durationMs !== undefined
     ) {
       if (command.durationMs > this.config.maxButtonHoldMs) {
         throw new SafetyError(
@@ -101,7 +120,7 @@ export class SafetyGuard {
       (command.type === "stick" ||
         command.type === "touchpad" ||
         command.type === "motion") &&
-      command.durationMs
+      command.durationMs !== undefined
     ) {
       if (command.durationMs > this.config.maxStickHoldMs) {
         throw new SafetyError(
