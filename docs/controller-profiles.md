@@ -78,3 +78,26 @@ include a `hid-switch-extended` profile HID payload with motion vectors. The
 compatibility XInput payload and generic `hid-gamepad` payload still encode the
 common gamepad subset, so platform helpers should consume the profile HID
 payload when they need those richer channels.
+
+### Motion values and coordinate frames
+
+`controller.motion()` accepts caller-provided numeric components for
+`acceleration`, `gyroscope`, and `orientation`. The API does not define their
+units, calibrate them against a sensor, or derive one quantity from another.
+Treat them as application-supplied values; this API does not promise physical
+units such as meters per second squared, radians per second, or radians.
+
+The PlayStation and Switch extended HID encoders clamp finite component values
+to `-1..1` and serialize them as signed 16-bit fields. Each `x`, `y`, and `z`
+component is written to the corresponding report field. This describes report
+serialization, not a normalized physical measurement or a conversion performed
+by `controller.motion()`. See [HID report formats](hid-gamepad-reports.md),
+[report conformance](gamepad-report-conformance.md), and the existing
+[PlayStation and Switch motion fixtures](../packages/core/src/__tests__/report-conformance.test.ts)
+for these encoder and component-mapping guarantees.
+
+OpenController does not promise that these axes use a common controller-body,
+world, gravity, player, screen, or game coordinate frame across devices, hosts,
+or consumers. The component names identify the report slots; they do not
+establish a universal human-centric orientation. Apply any consumer-specific
+transform in the application before passing values to `controller.motion()`.
