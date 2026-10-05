@@ -1,6 +1,6 @@
 # OpenController AI and Gaming Opportunity Goal
 
-**Status:** Cycle 1 is merged to `main` as PRs #1–#4. Cycle 2 issues [#8](https://github.com/SYMBaiEX/OpenController/issues/8) and [#9](https://github.com/SYMBaiEX/OpenController/issues/9) merged in [PR #12](https://github.com/SYMBaiEX/OpenController/pull/12) (`067fc591fe34e7d09cfdfedcf8db48fcd6a7c0d1`) and [PR #13](https://github.com/SYMBaiEX/OpenController/pull/13) (`5f7e6fc7054654f220a6cb45a4c438ae0d9e4ae7`); [#10](https://github.com/SYMBaiEX/OpenController/issues/10) remains deferred. Cycle 3 issue [#14](https://github.com/SYMBaiEX/OpenController/issues/14) merged in [PR #19](https://github.com/SYMBaiEX/OpenController/pull/19) (`f2baa6b297f05c20b065baab196cce8d6a725bdc`); [#15](https://github.com/SYMBaiEX/OpenController/issues/15) remains deferred. Cycle 4 issue [#22](https://github.com/SYMBaiEX/OpenController/issues/22) merged in [PR #25](https://github.com/SYMBaiEX/OpenController/pull/25) at `8eb744cf3167dee9838160ab7364ca6c3bc66e5f`, and gate [#23](https://github.com/SYMBaiEX/OpenController/issues/23) closed in PR #30 (`62e8b9569124219cf6c5fb5b5ad824e18de3c901`). Cycle 5 issue [#27](https://github.com/SYMBaiEX/OpenController/issues/27) merged in PR #32 at `e6d576987c9085a3377ce0e10791f56ce1994ada`; gate [#29](https://github.com/SYMBaiEX/OpenController/issues/29) awaits the Cycle 5 roadmap closeout. Cycle 6 gate [#35](https://github.com/SYMBaiEX/OpenController/issues/35), selected work [#20](https://github.com/SYMBaiEX/OpenController/issues/20), and candidate issues [#33](https://github.com/SYMBaiEX/OpenController/issues/33) and [#34](https://github.com/SYMBaiEX/OpenController/issues/34) are prepared; #35 depends on #29 and #20. Whole-match regression baselines remain deferred until a stable scenario is demonstrated; Reddit and accessibility source gaps remain open.
+**Status:** Cycle 1 merged in PRs #1–#4. Cycle 2 issues #8 and #9 merged in PRs #12 and #13; #10 remains deferred. Cycle 3 issue #14 merged in PR #19; #15 remains deferred. Cycle 4 issue #22 merged in PR #25; gate #23 closed in PR #30. Cycle 5 issue #27 merged in PR #32; gate #29 closed in PR #36 at `f44fe793ea4fef069c2a187084fcaa536848b336`. Cycle 6 issue #20 merged in PR #38 at `f20aab9ea80be7e01b5337c9000b6322f4a8bb5d`; gate #35 closes with this roadmap closeout. Cycle 7 research gate #37 is open in milestone 6 and depends on #35. Candidate issues #21, #33, and #34 remain deferred; Cycle 7 candidates are being researched. Whole-match regression baselines and Reddit/accessibility coverage remain open gaps. GitHub Project V2 creation is blocked by the integration's missing Projects write access; repository milestones, labels, and issue dependencies track the DAG meanwhile.
 
 ## Product goal
 
@@ -160,14 +160,13 @@ still not probed by the current native doctor, so their readiness remains
 
 ```mermaid
 flowchart TD
-  A[Cycle 5 decision PR #31 merged] --> B[ControllerHub implementation PR #32 merged]
-  B --> C[Cycle 5 roadmap closeout PR; close gate #29]
-  C --> D[Cycle 6 gate #35 unblocked]
-  E[Selected native-test cleanup issue #20] --> D
-  D --> F[Implement #20; independent review and checks]
-  F --> G[Merge implementation PR]
-  G --> H[Cycle 6 closeout; open Cycle 7 research gate]
-  H --> I[Close gate #35]
+  A[Cycle 5 closeout PR #36 merged; close gate #29] --> B[Cycle 6 gate #35]
+  C[Selected native-test cleanup #20] --> B
+  B --> D[Implementation PR #38 merged]
+  D --> E[Cycle 6 roadmap closeout PR; close gate #35 and milestone 5]
+  E --> F[Cycle 7 research gate #37]
+  F --> G[Create and rank independent candidate issues]
+  G --> H[Select parallel build lanes and form implementation DAG]
 ```
 
 The DAG repeats research, repository audit, bounded selection, implementation,
@@ -282,7 +281,7 @@ Implementation PR [#25](https://github.com/SYMBaiEX/OpenController/pull/25) merg
 
 PR #25 passed CI and received an independent gpt-6-luna agent review that found no blocker. GitHub has no substantive review record: Copilot could not review because of its quota limit, and CodeRabbit was still pending at merge. `bun run release:check` passed: 166 tests, zero failures, typecheck, all 9 build tasks, audit with no vulnerabilities, and package checks. A seeded headless smoke run with seed 42 reported matching server and summary metadata and 16 local decisions. The Playwright CDN returned HTTP 403, so the smoke used the existing system Chromium. These checks validate SDK-controlled policy behavior and packaging, not external game, host, or hardware behavior.
 
-Cycle 4 closed after roadmap closeout PR [#30](https://github.com/SYMBaiEX/OpenController/pull/30) merged at `62e8b9569124219cf6c5fb5b5ad824e18de3c901`; gate #23 and milestone 3 are closed. Cycle 5 selected [#27 — fix ControllerHub docs and test logical ID lifecycle](https://github.com/SYMBaiEX/OpenController/issues/27), merged in [PR #32](https://github.com/SYMBaiEX/OpenController/pull/32) at `e6d576987c9085a3377ce0e10791f56ce1994ada`; the research decision is recorded in [PR #31](https://github.com/SYMBaiEX/OpenController/pull/31). Gate [#29](https://github.com/SYMBaiEX/OpenController/issues/29) awaits this roadmap closeout. Cycle 6 gate [#35](https://github.com/SYMBaiEX/OpenController/issues/35) and selected issue [#20](https://github.com/SYMBaiEX/OpenController/issues/20) are prepared behind #29. Cycle 5 candidates [#26](https://github.com/SYMBaiEX/OpenController/issues/26) and [#28](https://github.com/SYMBaiEX/OpenController/issues/28) remain deferred.
+Cycle 4 closed after roadmap closeout PR [#30](https://github.com/SYMBaiEX/OpenController/pull/30) merged at `62e8b9569124219cf6c5fb5b5ad824e18de3c901`; gate #23 and milestone 3 are closed. Cycle 5 selected [#27 — fix ControllerHub docs and test logical ID lifecycle](https://github.com/SYMBaiEX/OpenController/issues/27), merged in [PR #32](https://github.com/SYMBaiEX/OpenController/pull/32) at `e6d576987c9085a3377ce0e10791f56ce1994ada`; its research decision is recorded in [PR #31](https://github.com/SYMBaiEX/OpenController/pull/31). Gate [#29](https://github.com/SYMBaiEX/OpenController/issues/29) and milestone 4 closed in PR [#36](https://github.com/SYMBaiEX/OpenController/pull/36) at `f44fe793ea4fef069c2a187084fcaa536848b336`. Cycle 5 candidates [#26](https://github.com/SYMBaiEX/OpenController/issues/26) and [#28](https://github.com/SYMBaiEX/OpenController/issues/28) remain deferred. That closeout opened Cycle 6 gate #35 and selected issue #20.
 
 ### Cycle 5 research decision (2026-10-04)
 
@@ -352,7 +351,7 @@ Reddit, SDL Discourse, and Godot forum searches returned HTTP 403; Anthropic com
 
 ### Cycle 6 repository fit and backlog
 
-Audit target: current main `e6d576987c9085a3377ce0e10791f56ce1994ada`. The code paths audited were unchanged by Cycle 5 PR #32.
+Audit target before implementation: `e6d576987c9085a3377ce0e10791f56ce1994ada`; the selected CLI paths were unchanged by Cycle 5 PR #32.
 
 | Decision | Issue | Finding | Cost/risk |
 | --- | --- | --- | --- |
@@ -374,7 +373,17 @@ flowchart TD
   G --> H[Close Cycle 6 gate #35]
 ```
 
-Cycle 5 closes after its roadmap PR merges and opens #35. Cycle 6 #35 stays blocked on selected issue #20 until that implementation merges; candidates #21, #33, and #34 remain outside milestone 5.
+Cycle 5 closed when PR #36 merged, closing gate #29 and opening gate #35. Cycle 6 gate #35 was blocked on selected issue #20; PR #38 has now merged, and this roadmap closeout completes the gate. Candidates #21, #33, and #34 remain deferred outside milestone 5.
+
+### Cycle 6 implementation and closeout
+
+Selected issue [#20](https://github.com/SYMBaiEX/OpenController/issues/20) merged in [PR #38](https://github.com/SYMBaiEX/OpenController/pull/38) at `f20aab9ea80be7e01b5337c9000b6322f4a8bb5d`; GitHub closed #20. The CLI now attempts controller disconnect when an action, neutralization, or state capture fails. When the action and disconnect both fail, the thrown `AggregateError` preserves the action error as its cause and prints labeled action and cleanup details through the CLI. The success message follows neutralization, state capture, and successful disconnect. This verifies CLI cleanup flow; it does not show that an OS, host, or game observed input.
+
+Validation passed: the focused native CLI tests reported 27 passing; typecheck passed; `bun run release:check` passed with 173 tests and its lint, build, audit, and package checks; `git diff --check` passed. GitHub CI's test check passed. An independent gpt-6-luna review of exact head `2a8a5f23b50ca5affecbe72e20bf62d308de1c74` found and reported a CLI error-visibility blocker; the fix was made and re-reviewed with no remaining blockers. CodeRabbit's check was green with a rate-limit note.
+
+This closeout closes Cycle 6 research gate [#35](https://github.com/SYMBaiEX/OpenController/issues/35) and milestone 5 after this PR merges. Cycle 7 research gate [#37](https://github.com/SYMBaiEX/OpenController/issues/37) is open in milestone 6 and is blocked by #35. Its objective is to create a broader, evidence-backed, non-duplicative backlog of independent issues, then select parallel build lanes with explicit owners and dependencies.
+
+GitHub Project V2 creation was retried during this cycle with the authenticated `SYMBaiEX` account. GitHub returned `Resource not accessible by integration (createProjectV2)`, and no existing Project V2 was listed. The DAG remains tracked through repository milestones, issue labels, and native issue dependencies until Projects write access is granted.
 
 ## Branch and swarm operating rules
 
