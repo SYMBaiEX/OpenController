@@ -464,6 +464,54 @@ The implementation DAG is complete: #41 -> #45, with #39, #40, #42, and #47 on i
 
 Cycle 7 research gate #37 and selected implementation issues are closed. The next research sweep is tracked under recurring goal [#55](https://github.com/SYMBaiEX/OpenController/issues/55); create the next cycle's gate, milestone, and candidate DAG after the source log and repository-fit review are complete. GitHub Project V2 remains unavailable to this integration because `createProjectV2` returns `Resource not accessible by integration`; use milestone, labels, and issue dependencies until Projects write access is restored.
 
+## Cycle 8 research decision (2026-10-05)
+
+The dated source log, observed workarounds, confidence notes, repository audit, and coverage limits are recorded in [research gate #57](https://github.com/SYMBaiEX/OpenController/issues/57). The public sweep included AI developer forums, gaming and accessibility projects, Steam/Proton, SDL, Godot, and native-controller tools. Reddit and several search/documentation endpoints returned 403; HN and Steam search were sparse. These links are examples of reported problems, not OpenController incidents or estimates of prevalence.
+
+### Ranked opportunities and decision
+
+| Rank | Issue | Affected users and observed evidence | Fit, cost/risk, decision |
+| --- | --- | --- | --- |
+| 1 | [#58 bounded Linux uinput first-open retry](https://github.com/SYMBaiEX/OpenController/issues/58) | Linux users may start the helper before `/dev/uinput` appears or its access rule settles. Asahi-map #6 (2026-09-29) describes a transient ~80 ms race; Omarchy #8373 (2026-08-26) describes a separate persistent root-owned mode-0600 node. | High fit in the C helper; moderate confidence from two detailed reports. Low/medium cost. Selected with a fixed retry bound, deterministic tests, and no privilege or permission changes. |
+| 2 | [#59 persistent uinput permission guidance](https://github.com/SYMBaiEX/OpenController/issues/59) | Linux users may have a persistent restrictive node even after a static-node rule exists; Omarchy #8373 reports using systemd-tmpfiles to adjust the existing node. Asahi-map #6 supplies a distinct transient case. | High fit in the doctor and setup docs; moderate evidence. Low/medium cost. Selected as user-reviewed guidance, independent of #58. |
+| 3 | [#61 semantic action-map example](https://github.com/SYMBaiEX/OpenController/issues/61) | App and agent authors define keyboard/input bindings for semantic commands. Accessible-Chess #5 (2026-08-14) discusses app-owned aliases and conflict handling; an OpenAI game demo (2026-02-16) added arrow/space after starting with WASD. Each is one adjacent example, so recurrence confidence is low-to-medium. | High fit in existing `createActionMap`; low cost and no runtime API change. Selected as a hardware-free runnable example with caller-owned input mapping boundaries. |
+| 4 | [#60 opt-in persistent-state expiry lease](https://github.com/SYMBaiEX/OpenController/issues/60) | Godot #105047 (2025-04-05) and SDL #13177 (2025-06-05, 2026 follow-up) describe stale input after consumer/driver disconnects. Godot later reported a fix; neither thread establishes an OpenController issue or that an in-process lease solves it. | Medium fit, low-to-medium evidence, medium/high timer, queue, and cleanup risk. Deferred pending an SDK-specific reproduction or stronger product evidence. |
+| 5 | [#62 Windows VHF post-resume health](https://github.com/SYMBaiEX/OpenController/issues/62) | libvirtualhid #140 (2026-09-11) reports a post-resume unavailable device, but was closed with an upstream fix. | Low confidence and no maintained installed-driver test path in this repository. Deferred until driver and test ownership exist. |
+
+### Build goal and DAG
+
+Deliver three bounded improvements: tolerate only transient Linux uinput first-open races, explain persistent Linux access denial without changing host permissions, and show app authors how to map caller-owned input identifiers onto stable semantic actions. Preserve the SDK/host boundary and state exactly what hardware-free validation proves.
+
+```mermaid
+flowchart TD
+  A[Research gate #57] --> B[Decision PR #63; close gate]
+  B --> C[#58 bounded helper retry]
+  B --> D[#59 persistent permission diagnosis/docs]
+  B --> E[#61 semantic action-map example]
+  C --> F[Independent exact-head review and CI]
+  D --> F
+  E --> F
+  F --> G[Merge ready PRs and record closeout]
+  G --> H[Open the next research gate]
+  A -. deferred .-> I[#60 expiry lease]
+  A -. deferred .-> J[#62 Windows VHF health]
+```
+
+The selected lanes own disjoint implementation files and may proceed in parallel after the decision PR closes #57. Do not create artificial stack order: stack a PR only when its code or file changes require an earlier PR. The shared research decision is the prerequisite for all three lanes. Track issues #58, #59, and #61 in milestone 7 with native blocked-by edges from #57; #60 is labeled deferred with no active milestone, and #62 remains deferred outside the milestone.
+
+### Cycle 8 acceptance checklist
+
+- [x] Search and record dated public sources, direct evidence, workarounds, fit, confidence, and coverage gaps in #57.
+- [x] Audit candidates against existing issues and repository ownership boundaries.
+- [x] Rank opportunities and create bounded, evidence-backed implementation issues.
+- [x] Create native DAG edges from gate #57 to selected issues #58, #59, and #61.
+- [ ] Merge this decision record before selected implementation work begins.
+- [ ] Implement and independently review each selected lane on its exact PR head; pass relevant checks.
+- [ ] Merge reviewed PRs in dependency order; record commits, checks, and any deferrals.
+- [ ] Close milestone 7 after all selected work is complete and open the next research gate.
+
+Cycle 8 does not claim that retries correct persistent permissions, that documentation verifies host/game input, or that semantic action examples provide input capture, OS remapping, or an accessibility UI.
+
 ## Branch and swarm operating rules
 
 
