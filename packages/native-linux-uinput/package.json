@@ -49,6 +49,7 @@
   "files": [
     "dist",
     "src/helper/opencontroller-uinput-bridge.c",
+    "src/helper/uinput-open.h",
     "README.md",
     "LICENSE"
   ],

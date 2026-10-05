@@ -103,6 +103,10 @@ describe("linux uinput adapter helpers", () => {
 
   test("helper source advertises Linux force-feedback rumble", async () => {
     const source = await readFile(linuxUinputHelperSourcePath, "utf8");
+    const openSource = await readFile(
+      new URL("../helper/uinput-open.h", import.meta.url),
+      "utf8",
+    );
 
     expect(source).toContain("UI_SET_EVBIT, EV_FF");
     expect(source).toContain("UI_SET_FFBIT, FF_RUMBLE");
@@ -111,7 +115,7 @@ describe("linux uinput adapter helpers", () => {
     expect(source).toContain("UI_END_FF_UPLOAD");
     expect(source).toContain("EV_UINPUT");
     expect(source).toContain("opencontroller.bridge.feedback");
-    expect(source).toContain("O_RDWR | O_NONBLOCK");
+    expect(openSource).toContain("O_RDWR | O_NONBLOCK");
   });
 
   test("helper source advertises Linux player LED feedback", async () => {
