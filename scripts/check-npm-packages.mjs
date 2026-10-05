@@ -21,7 +21,10 @@ const workspaces = [
 const sourceAllowlist = new Map([
   [
     "packages/native-linux-uinput",
-    new Set(["src/helper/opencontroller-uinput-bridge.c"]),
+    new Set([
+      "src/helper/opencontroller-uinput-bridge.c",
+      "src/helper/uinput-open.h",
+    ]),
   ],
 ]);
 

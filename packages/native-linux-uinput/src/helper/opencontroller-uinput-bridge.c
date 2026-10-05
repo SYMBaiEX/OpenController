@@ -10,6 +10,7 @@
 #include <sys/select.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include "uinput-open.h"
 
 #define OC_XINPUT_REPORT_BYTES 12
 #define OC_HID_REPORT_BYTES 13
@@ -1015,6 +1016,7 @@ int main(int argc, char **argv) {
   size_t line_length = 0;
   int stdin_open = 1;
   int fd;
+  unsigned int open_attempt_count = 0;
   int created = 0;
   struct oc_rumble_effect effects[OC_MAX_FF_EFFECTS];
   char feedback_controller_id[OC_CONTROLLER_ID_MAX];
@@ -1071,10 +1073,14 @@ int main(int argc, char **argv) {
   set_feedback_controller_id(feedback_controller_id,
                              sizeof(feedback_controller_id), controller_id);
 
-  fd = open(device_path, O_RDWR | O_NONBLOCK);
+  fd = oc_uinput_open_device(device_path, &open_attempt_count);
   if (fd < 0) {
-    fprintf(stderr, "opencontroller-uinput: failed to open %s: %s\n",
-            device_path, strerror(errno));
+    fprintf(stderr,
+            "opencontroller-uinput: failed to open %s after %u attempt%s: %s; "
+            "check device and permission setup with "
+            "opencontroller-linux-uinput-doctor --check\n",
+            device_path, open_attempt_count,
+            open_attempt_count == 1 ? "" : "s", strerror(errno));
     return 1;
   }
 
