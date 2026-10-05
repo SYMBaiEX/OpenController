@@ -51,6 +51,41 @@ The doctor checks Linux support, `/dev/uinput` candidates, write access, whether
 the `uinput` module appears in `/proc/modules`, and prints explicit udev rule
 templates. It does not change system permissions.
 
+When a node exists but is not writable, the report includes its mode, owner UID,
+and group GID. Compare those values with your user and groups (for example, run
+`stat -c '%A %a %U:%G %n' /dev/uinput` and `id`). A node that remains unwritable
+after it exists and its udev rules have settled points to persistent ownership
+or mode restrictions. If access becomes available shortly after the module or
+node starts, that points to a transient startup race. Retrying can help only
+with timing; it cannot correct restrictive ownership or mode.
+
+The setup output includes udev rules for access policy that should be applied
+when the node is created. For an already-existing static `/dev/uinput` node,
+`systemd-tmpfiles` is another option on systems that use it. Review your local
+policy and the group before using this example:
+
+```text
+# /etc/tmpfiles.d/opencontroller-uinput.conf
+z /dev/uinput 0660 root input -
+```
+
+Here `z` adjusts the mode and ownership of an existing path; it does not create
+a missing device node. After reviewing and creating the file with an editor,
+apply it explicitly:
+
+```bash
+sudo systemd-tmpfiles --create /etc/tmpfiles.d/opencontroller-uinput.conf
+```
+
+This grants write access to members of the `input` group, so use a group that
+exists and whose membership is appropriate on your system. Membership may
+grant broad access to input devices; it can require a new login session to take
+effect. The tmpfiles rule handles the existing node when applied; a udev rule
+is generally the better fit for access that should be applied whenever a node
+is created. Neither option is installed or run by OpenController. See the
+[systemd-tmpfiles documentation](https://www.freedesktop.org/software/systemd/man/latest/tmpfiles.d.html)
+for the rule format and behavior.
+
 ## Run With OpenController JSONL
 
 ```bash

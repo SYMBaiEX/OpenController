@@ -60,7 +60,17 @@ describe("linux uinput diagnostics", () => {
     expect(diagnostics.ok).toBe(false);
     expect(diagnostics.moduleLoaded).toBe(false);
     expect(diagnostics.recommendations.join("\n")).toContain("modprobe");
+    expect(diagnostics.recommendations.join("\n")).toContain(
+      "persistent owner/mode denial",
+    );
+    expect(diagnostics.recommendations.join("\n")).toContain("transient race");
+    expect(diagnostics.recommendations.join("\n")).toContain(
+      "Retrying cannot fix restrictive permissions",
+    );
     expect(diagnostics.recommendations.join("\n")).toContain("Grant write");
+    expect(formatLinuxUinputDiagnostics(diagnostics)).toContain(
+      "mode=0600 uid=0 gid=0",
+    );
   });
 
   test("provides explicit udev rule templates", () => {
