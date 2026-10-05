@@ -220,6 +220,51 @@ function parseEvent(
       `Unsupported replay event type ${JSON.stringify(value.type)} in ${path} at line ${lineNumber} (event ${eventNumber})`,
     );
   }
+  if (
+    typeof value.timestamp !== "number" ||
+    !Number.isFinite(value.timestamp)
+  ) {
+    throw new Error(
+      `Invalid replay event in ${path} at line ${lineNumber} (event ${eventNumber}): timestamp must be a finite number`,
+    );
+  }
+  switch (value.type) {
+    case "state":
+      if (typeof value.controllerId !== "string" || !isRecord(value.state)) {
+        throw new Error(
+          `Invalid state event in ${path} at line ${lineNumber} (event ${eventNumber}): expected controllerId and state`,
+        );
+      }
+      break;
+    case "feedback":
+      if (
+        typeof value.controllerId !== "string" ||
+        !isRecord(value.feedback) ||
+        !isRecord(value.stateAfter)
+      ) {
+        throw new Error(
+          `Invalid feedback event in ${path} at line ${lineNumber} (event ${eventNumber}): expected controllerId, feedback, and stateAfter`,
+        );
+      }
+      break;
+    case "error":
+      if (
+        typeof value.controllerId !== "string" ||
+        typeof value.error !== "string"
+      ) {
+        throw new Error(
+          `Invalid error event in ${path} at line ${lineNumber} (event ${eventNumber}): expected controllerId and error`,
+        );
+      }
+      break;
+    case "annotation":
+      if (typeof value.label !== "string") {
+        throw new Error(
+          `Invalid annotation event in ${path} at line ${lineNumber} (event ${eventNumber}): expected label`,
+        );
+      }
+      break;
+  }
   return value;
 }
 

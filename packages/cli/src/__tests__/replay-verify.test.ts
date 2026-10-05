@@ -34,6 +34,14 @@ describe("replay verify", () => {
     await expect(verifyReplay(input)).rejects.toThrow(`at line 1 (event 1)`);
   });
 
+  test("rejects malformed recognized state events with line and event location", async () => {
+    const input = join(fixtures, "replay-verify-malformed-state-event.jsonl");
+
+    await expect(verifyReplay(input)).rejects.toThrow(
+      `Invalid state event in ${input} at line 2 (event 2): expected controllerId and state`,
+    );
+  });
+
   test("marks legacy commands unverifiable rather than inferring missing state", async () => {
     const result = await verifyReplay(
       join(fixtures, "replay-verify-legacy.jsonl"),
