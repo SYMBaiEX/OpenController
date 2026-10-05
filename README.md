@@ -54,7 +54,7 @@ device bridges where the operating system requires them.
 
 ## What You Get
 
-- Typed controller runtime for Xbox, PlayStation, Switch, generic HID, and keyboard/mouse-style profiles
+- Typed controller runtime for Xbox, PlayStation, Switch, generic HID, and a `keyboard-mouse` gamepad profile; its report mappings and limits are documented in [Controller Profiles](docs/controller-profiles.md#keyboard-mouse-profile-reports)
 - Button helper options for analog pressure, including trigger pressure mapped into XInput/HID report bytes
 - Explicit persistent-state helpers for held buttons, held sticks, analog
   triggers, and exact D-pad directions
