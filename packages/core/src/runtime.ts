@@ -1,4 +1,5 @@
 import type { ControllerAdapter } from "./adapters";
+import { TimedPressAbortError } from "./errors";
 import { EventEmitter, type Unsubscribe } from "./events";
 import {
   type ControllerProfile,
@@ -70,14 +71,42 @@ export class ControllerRuntime {
   async send(
     command: ControllerCommand,
     context: CommandContext = {},
+    signal?: AbortSignal,
   ): Promise<void> {
+    const timedPressSignal = isPositiveTimedPress(command) ? signal : undefined;
+    if (timedPressSignal?.aborted) {
+      throw new TimedPressAbortError({
+        abortReason: timedPressSignal.reason,
+        cause: timedPressSignal.reason,
+      });
+    }
+
     await this.queue.enqueue(async () => {
+      if (timedPressSignal?.aborted) {
+        throw new TimedPressAbortError({
+          abortReason: timedPressSignal.reason,
+          cause: timedPressSignal.reason,
+        });
+      }
       try {
-        await this.processCommand(command, context);
+        if (isPositiveTimedPress(command) && timedPressSignal) {
+          this.safety.assert(command);
+          await this.runCancellablePress(command, context, timedPressSignal);
+        } else {
+          await this.processCommand(command, context);
+        }
       } catch (error) {
         await this.replay?.error(error, command, context);
         if (this.safety.getConfig().neutralOnError) {
-          await this.forceNeutral();
+          if (error instanceof TimedPressAbortError) {
+            try {
+              await this.forceNeutral();
+            } catch (neutralizationError) {
+              error.neutralizationError = neutralizationError;
+            }
+          } else {
+            await this.forceNeutral();
+          }
         }
         throw error;
       }
@@ -219,6 +248,107 @@ export class ControllerRuntime {
         context,
       );
     }
+  }
+
+  private async runCancellablePress(
+    command: Extract<ControllerCommand, { type: "press" }>,
+    context: CommandContext,
+    signal: AbortSignal,
+  ): Promise<void> {
+    const normalized = normalizeCommand(this.profile, this.id, command);
+    if (normalized.command.type !== "press") {
+      return;
+    }
+
+    const before = this.state.getState();
+    let aborted = signal.aborted;
+    let onAbort: (() => void) | undefined;
+    const abortPromise = new Promise<void>((resolve) => {
+      onAbort = () => {
+        aborted = true;
+        resolve();
+      };
+      signal.addEventListener("abort", onAbort, { once: true });
+      if (signal.aborted) {
+        onAbort();
+      }
+    });
+
+    try {
+      try {
+        await this.adapter.send(normalized);
+      } catch (pressSendError) {
+        if (aborted || signal.aborted) {
+          throw new TimedPressAbortError({
+            abortReason: signal.reason,
+            cause: pressSendError,
+            pressSendError,
+          });
+        }
+        throw pressSendError;
+      }
+
+      const after = this.state.setButton(
+        normalized.command.button,
+        true,
+        normalized.command.pressure,
+      );
+      await this.logCommand(normalized.command, before, after, context);
+      await this.syncState(after);
+
+      if (aborted || signal.aborted) {
+        await this.releaseCancelledPress(
+          normalized.command.button,
+          context,
+          signal,
+        );
+        return;
+      }
+
+      const outcome = await Promise.race([
+        sleep(normalized.command.durationMs ?? 0).then(
+          () => "duration" as const,
+        ),
+        abortPromise.then(() => "abort" as const),
+      ]);
+      if (outcome === "abort") {
+        await this.releaseCancelledPress(
+          normalized.command.button,
+          context,
+          signal,
+        );
+        return;
+      }
+
+      await this.runRelease(
+        { type: "release", button: normalized.command.button },
+        context,
+      );
+    } finally {
+      if (onAbort) {
+        signal.removeEventListener("abort", onAbort);
+      }
+    }
+  }
+
+  private async releaseCancelledPress(
+    button: string,
+    context: CommandContext,
+    signal: AbortSignal,
+  ): Promise<never> {
+    try {
+      await this.runRelease({ type: "release", button }, context);
+    } catch (releaseError) {
+      throw new TimedPressAbortError({
+        abortReason: signal.reason,
+        cause: signal.reason,
+        releaseError,
+      });
+    }
+    throw new TimedPressAbortError({
+      abortReason: signal.reason,
+      cause: signal.reason,
+    });
   }
 
   private async runRelease(
@@ -559,4 +689,14 @@ export class ControllerRuntime {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, Math.max(0, ms)));
+}
+
+function isPositiveTimedPress(
+  command: ControllerCommand,
+): command is Extract<ControllerCommand, { type: "press" }> {
+  return (
+    command.type === "press" &&
+    command.durationMs !== undefined &&
+    command.durationMs > 0
+  );
 }

@@ -218,6 +218,7 @@ export type ControllerPressOptions = {
   durationMs?: number;
   pressure?: number;
   context?: CommandContext;
+  signal?: AbortSignal;
 };
 
 export type ControllerSetButtonOptions = {
