@@ -73,9 +73,9 @@ They do not identify physical devices or host/browser slots. Use `hub.get(id)`
 to retrieve an added controller. Await every in-flight `hub.add()` before
 calling `hub.disconnectAll()`. The method snapshots the controllers registered
 when called, attempts every controller in that snapshot, and waits for all
-attempts to settle. An `add()` started after the snapshot is outside that call
-and remains registered afterward. Callers must serialize concurrent
-`disconnectAll()` calls.
+attempts to settle. An `add()` started after the snapshot is outside that call;
+if creation succeeds with an available ID, it remains registered afterward.
+Callers must serialize concurrent `disconnectAll()` calls.
 
 When every disconnect succeeds, the snapshotted IDs are removed and the hub is
 empty if no later controller was added. If any disconnect fails, successful
