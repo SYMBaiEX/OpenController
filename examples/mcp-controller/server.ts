@@ -120,8 +120,11 @@ async function main() {
       transport.onclose = resolve;
     });
   } finally {
-    await example.server.close();
-    await example.close();
+    try {
+      await example.server.close();
+    } finally {
+      await example.close();
+    }
   }
 }
 

@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import {
+  type ControllerAdapter,
+  createAdapterCapabilities,
+} from "@opencontroller/core";
 import { createMcpControllerExample, type McpActionResult } from "./server";
 
 const example = await createMcpControllerExample();
@@ -61,7 +65,72 @@ try {
     "MCP smoke passed: list, invoke, malformed args, unknown tool, dry-run state.",
   );
 } finally {
-  await client.close();
-  await example.server.close();
-  await example.close();
+  try {
+    await client.close();
+  } finally {
+    try {
+      await example.server.close();
+    } finally {
+      await example.close();
+    }
+  }
 }
+
+const adapterFailureMessage = "private adapter failure detail";
+let failingAdapterDisconnected = false;
+const failingAdapter: ControllerAdapter = {
+  name: "failing-smoke-adapter",
+  platform: "all",
+  async connect() {},
+  async send() {
+    throw new Error(adapterFailureMessage);
+  },
+  async neutral() {},
+  async disconnect() {
+    failingAdapterDisconnected = true;
+  },
+  capabilities: () => createAdapterCapabilities(),
+};
+const failingExample = await createMcpControllerExample(failingAdapter);
+const [failureClientTransport, failureServerTransport] =
+  InMemoryTransport.createLinkedPair();
+const failureClient = new Client({
+  name: "opencontroller-mcp-failure-smoke",
+  version: "0.1.0",
+});
+
+try {
+  await Promise.all([
+    failingExample.server.connect(failureServerTransport),
+    failureClient.connect(failureClientTransport),
+  ]);
+
+  const failed = await failureClient.callTool({
+    name: "hold_guard",
+    arguments: {},
+  });
+  assert.equal(failed.isError, true);
+  assert.deepEqual(failed.structuredContent, {
+    ok: false,
+    error: {
+      code: "ACTION_FAILED",
+      message: "The action could not be completed.",
+    },
+  });
+  const failedPayload = JSON.stringify(failed);
+  assert.equal(failedPayload.includes(adapterFailureMessage), false);
+  assert.equal(failedPayload.includes("stack"), false);
+} finally {
+  try {
+    await failureClient.close();
+  } finally {
+    try {
+      await failingExample.server.close();
+    } finally {
+      await failingExample.close();
+    }
+  }
+}
+assert.equal(failingAdapterDisconnected, true);
+
+console.log("MCP smoke passed: sanitized adapter failures and cleanup.");
