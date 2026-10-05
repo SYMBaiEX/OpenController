@@ -6,6 +6,7 @@ import { nativeCommand } from "./commands/native";
 import { overlayCommand } from "./commands/overlay";
 import { replayCommand } from "./commands/replay";
 import { replayExportCommand } from "./commands/replay-export";
+import { replayVerifyCommand } from "./commands/replay-verify";
 import { testCommand } from "./commands/test";
 
 type Flags = Record<string, string | boolean>;
@@ -78,6 +79,10 @@ async function main(argv: string[]): Promise<void> {
           rest.slice(1).find((arg) => !arg.startsWith("--")),
           flags.format,
           flags.output,
+        );
+      } else if (rest[0] === "verify") {
+        await replayVerifyCommand(
+          rest.slice(1).find((arg) => !arg.startsWith("--")),
         );
       } else {
         await replayCommand(rest.find((arg) => !arg.startsWith("--")));
@@ -178,6 +183,7 @@ Usage:
   opencontroller test --profile xbox --adapter dry-run
   opencontroller overlay --profile xbox --port 4317
   opencontroller replay ./replays/session/events.jsonl
+  opencontroller replay verify ./replays/session/events.jsonl
   opencontroller replay export ./replays/session/events.jsonl --format csv --output replay.csv
   opencontroller bridge --id player-1
   opencontroller native doctor --backend current
