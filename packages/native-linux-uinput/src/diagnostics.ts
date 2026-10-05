@@ -245,7 +245,10 @@ function createRecommendations(
   }
   if (existingDevices.length > 0 && writableDevices.length === 0) {
     recommendations.push(
-      "Grant write access to /dev/uinput using a reviewed udev rule, input group, or sudo for testing.",
+      "An existing uinput device node is not writable. Compare its reported mode/uid/gid with your user and groups. If access stays denied after the node and udev rules settle, this is a persistent owner/mode denial; access that appears shortly after module or node startup indicates a transient race. Retrying cannot fix restrictive permissions.",
+    );
+    recommendations.push(
+      "Grant write access using a reviewed udev rule or suitable group; use sudo only for a temporary test.",
     );
   }
   if (existingDevices.some((device) => !device.characterDevice)) {
