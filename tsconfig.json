@@ -28,6 +28,9 @@
     },
     {
       "path": "./examples/basic-dry-run"
+    },
+    {
+      "path": "./examples/mcp-controller"
     }
   ]
 }
