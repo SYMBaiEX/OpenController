@@ -71,8 +71,36 @@ await hub.disconnectAll();
 Hub IDs are caller-assigned logical identifiers for controllers in this hub.
 They do not identify physical devices or host/browser slots. Use `hub.get(id)`
 to retrieve an added controller. Await every in-flight `hub.add()` before
-calling `hub.disconnectAll()`: it disconnects the controllers currently
-registered with the hub and clears those IDs so they can be added again.
+calling `hub.disconnectAll()`. The method snapshots the controllers registered
+when called, attempts every controller in that snapshot, and waits for all
+attempts to settle. An `add()` started after the snapshot is outside that call
+and remains registered afterward. Callers must serialize concurrent
+`disconnectAll()` calls.
+
+When every disconnect succeeds, the snapshotted IDs are removed and the hub is
+empty if no later controller was added. If any disconnect fails, successful
+IDs are removed while failed IDs remain registered. The method then throws a
+`ControllerHubDisconnectAllError`; its readonly `failuresById` record maps each
+failed logical ID to the original error:
+
+```ts
+import { ControllerHubDisconnectAllError } from "@opencontroller/core";
+
+try {
+  await hub.disconnectAll();
+} catch (error) {
+  if (error instanceof ControllerHubDisconnectAllError) {
+    for (const [id, cause] of Object.entries(error.failuresById)) {
+      console.error(`Could not disconnect ${id}`, cause);
+    }
+  }
+}
+```
+
+Failed controllers remain available for inspection and a caller may retry
+`disconnectAll()`. Retry success depends on whether each failed controller's
+adapter is still usable; the hub does not guarantee that every adapter can be
+retried.
 
 ## Analog Button Pressure
 

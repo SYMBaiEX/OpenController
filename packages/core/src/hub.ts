@@ -9,6 +9,18 @@ export type ControllerHubOptions = {
   controllers?: ControllerHubEntry[];
 };
 
+export class ControllerHubDisconnectAllError extends Error {
+  readonly failuresById: Readonly<Record<string, unknown>>;
+
+  constructor(failuresById: Record<string, unknown>) {
+    super("Failed to disconnect one or more controllers");
+    this.name = "ControllerHubDisconnectAllError";
+    this.failuresById = Object.freeze(
+      Object.fromEntries(Object.entries(failuresById)),
+    );
+  }
+}
+
 export class ControllerHub {
   private readonly controllers = new Map<string, Controller>();
   private readonly pendingIds = new Set<string>();
@@ -54,12 +66,29 @@ export class ControllerHub {
   }
 
   async disconnectAll(): Promise<void> {
-    await Promise.all(
-      [...this.controllers.values()].map((controller) =>
-        controller.disconnect(),
-      ),
+    const snapshot = [...this.controllers.entries()];
+    const results = await Promise.allSettled(
+      snapshot.map(([, controller]) => controller.disconnect()),
     );
-    this.controllers.clear();
+    const failuresById = Object.create(null) as Record<string, unknown>;
+
+    for (let index = 0; index < snapshot.length; index += 1) {
+      const entry = snapshot[index];
+      const result = results[index];
+      if (!entry || !result) {
+        continue;
+      }
+      const [id] = entry;
+      if (result.status === "fulfilled") {
+        this.controllers.delete(id);
+      } else {
+        failuresById[id] = result.reason;
+      }
+    }
+
+    if (Object.keys(failuresById).length > 0) {
+      throw new ControllerHubDisconnectAllError(failuresById);
+    }
   }
 }
 
