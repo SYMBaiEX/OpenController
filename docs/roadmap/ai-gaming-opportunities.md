@@ -429,14 +429,14 @@ The audit compared each candidate against current main 66eed518bd65dafb7621dbd37
 
 Issue bodies retain dated source evidence, acceptance criteria, non-goals, and validation instructions. Six selected issues are split into five parallel lanes and one dependent documentation lane:
 
-- **#39 core cancellation:** packages/core/src/controller.ts, packages/core/src/runtime.ts, focused core tests, and docs/safety.md.
+- **#39 core cancellation:** packages/core/src/controller.ts, packages/core/src/runtime.ts, a new packages/core/src/__tests__/timed-press-cancellation.test.ts file, and docs/safety.md.
 - **#40 MCP example:** examples/mcp-controller/, its package-local smoke test, and any required bun.lock/root validation change as one coordinated lane.
-- **#41 profile semantics:** profile/bridge assertions, docs/controller-profiles.md, and its README clarification.
+- **#41 profile semantics:** a new packages/core/src/__tests__/keyboard-mouse-profile.test.ts file, docs/controller-profiles.md, and its README clarification.
 - **#42 replay verifier:** CLI replay verification/dispatch/tests and docs/replay-logs.md.
-- **#47 hub accounting:** packages/core/src/hub.ts, focused hub tests, and packages/core/README.md.
+- **#47 hub accounting:** packages/core/src/hub.ts, a new packages/core/src/__tests__/hub-disconnect-all.test.ts file, and packages/core/README.md.
 - **#45 motion docs:** starts after #41's profile-doc PR merges; owns only the remaining motion contract in docs/controller-profiles.md.
 
-Do not let #41 and #45 branches independently edit the same docs file. Other lanes have separate primary file ownership. Fetch origin before each lane and at integration points. The #45 branch is based on the merged #41 head until it can be rebased to main. Use one reviewable PR per issue, preserve dependency order, and merge only after independent review and required checks pass.
+Do not let #41 and #45 branches independently edit the same docs file. Keep #39 and #47 test changes in their separate focused files; do not append either lane to controller.test.ts. Other lanes have separate primary file ownership. Fetch origin before each lane and at integration points. The #45 branch is based on the merged #41 head until it can be rebased to main. Use one reviewable PR per issue, preserve dependency order, and merge only after independent review and required checks pass.
 
 DAG:
 - Cycle 6 gate #35 -> Cycle 6 closeout PR #43 -> Cycle 7 research gate #37.
