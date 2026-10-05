@@ -293,14 +293,23 @@ export class ControllerRuntime {
         true,
         normalized.command.pressure,
       );
-      await this.logCommand(normalized.command, before, after, context);
-      await this.syncState(after);
+      let postPressError: unknown;
+      try {
+        await this.logCommand(normalized.command, before, after, context);
+        await this.syncState(after);
+      } catch (error) {
+        if (!aborted && !signal.aborted) {
+          throw error;
+        }
+        postPressError = error;
+      }
 
       if (aborted || signal.aborted) {
         await this.releaseCancelledPress(
           normalized.command.button,
           context,
           signal,
+          postPressError,
         );
         return;
       }
@@ -335,6 +344,7 @@ export class ControllerRuntime {
     button: string,
     context: CommandContext,
     signal: AbortSignal,
+    postPressError?: unknown,
   ): Promise<never> {
     try {
       await this.runRelease({ type: "release", button }, context);
@@ -342,12 +352,14 @@ export class ControllerRuntime {
       throw new TimedPressAbortError({
         abortReason: signal.reason,
         cause: signal.reason,
+        ...(postPressError !== undefined ? { postPressError } : {}),
         releaseError,
       });
     }
     throw new TimedPressAbortError({
       abortReason: signal.reason,
       cause: signal.reason,
+      ...(postPressError !== undefined ? { postPressError } : {}),
     });
   }
 

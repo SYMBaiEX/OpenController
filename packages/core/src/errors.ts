@@ -33,6 +33,7 @@ export type TimedPressAbortErrorOptions = {
   abortReason: unknown;
   cause: unknown;
   pressSendError?: unknown;
+  postPressError?: unknown;
   releaseError?: unknown;
   neutralizationError?: unknown;
 };
@@ -42,6 +43,7 @@ export class TimedPressAbortError extends Error {
   readonly abortReason: unknown;
   override readonly cause: unknown;
   readonly pressSendError?: unknown;
+  readonly postPressError?: unknown;
   readonly releaseError?: unknown;
   neutralizationError?: unknown;
 
@@ -52,6 +54,9 @@ export class TimedPressAbortError extends Error {
     this.cause = options.cause;
     if (options.pressSendError !== undefined) {
       this.pressSendError = options.pressSendError;
+    }
+    if (options.postPressError !== undefined) {
+      this.postPressError = options.postPressError;
     }
     if (options.releaseError !== undefined) {
       this.releaseError = options.releaseError;

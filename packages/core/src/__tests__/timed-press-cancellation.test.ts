@@ -215,6 +215,57 @@ describe("positive-duration press cancellation", () => {
     await controller.disconnect();
   });
 
+  test("releases after accepted send when cancelled state sync rejects", async () => {
+    const adapter = new ControlledAdapter();
+    const controller = await makeController(adapter, true);
+    const syncGate = deferred();
+    const syncEntered = deferred();
+    let pressSyncCount = 0;
+    adapter.syncStateBehavior = async () => {
+      pressSyncCount += 1;
+      if (pressSyncCount === 1) {
+        syncEntered.resolve();
+        await syncGate.promise;
+      }
+    };
+    const aborter = new AbortController();
+    const reason = "target changed";
+    const syncFailure = new Error("press state sync failed");
+    const releaseFailure = new Error("release failed");
+    const neutralizationFailure = new Error("neutralization failed");
+    adapter.sendBehavior = async (command) => {
+      if (command.command.type === "release") {
+        throw releaseFailure;
+      }
+    };
+    adapter.neutralBehavior = async () => {
+      throw neutralizationFailure;
+    };
+    const press = controller.press("A", {
+      durationMs: 500,
+      signal: aborter.signal,
+    });
+    await syncEntered.promise;
+    aborter.abort(reason);
+    syncGate.reject(syncFailure);
+
+    const error = await press.catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(TimedPressAbortError);
+    expect(error).toMatchObject({
+      abortReason: reason,
+      cause: reason,
+      postPressError: syncFailure,
+      releaseError: releaseFailure,
+      neutralizationError: neutralizationFailure,
+    });
+    expect(adapter.history.map(({ command }) => command.type)).toEqual([
+      "press",
+      "release",
+    ]);
+    expect(adapter.neutralCalls).toBe(1);
+    await controller.disconnect();
+  });
+
   test("gives the timer path ownership once its release has started", async () => {
     const adapter = new ControlledAdapter();
     const releaseGate = deferred();

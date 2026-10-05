@@ -38,9 +38,12 @@ reaches the adapter, the press is rejected without dispatch. If the adapter's
 press send is already pending, OpenController waits for that adapter promise to
 settle. A successful send is followed by one matching release before the call
 rejects with `TimedPressAbortError`. The error exposes `abortReason` and `cause`,
-and may also expose `pressSendError`, `releaseError`, and
-`neutralizationError` when those operations fail. Adapter failures do not
-establish whether a host observed a partial input.
+and may also expose `pressSendError`, `postPressError`, `releaseError`, and
+`neutralizationError` when those operations fail. If cancellation occurs while
+post-send logging or state synchronization is pending and that step rejects,
+the runtime still attempts the matching release and records that failure in
+`postPressError`. Adapter failures do not establish whether a host observed a
+partial input.
 
 Cancellation applies only to positive-duration `press` calls. Zero-duration
 presses keep their existing behavior, and cancellation does not release an
